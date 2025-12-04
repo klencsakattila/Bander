@@ -1,0 +1,106 @@
+/* -------------------------------
+   GLOBAL RESET
+--------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #FFF3E0; /* brand background */
+  color: #264653; /* main text */
+}
+
+/* Remove underline */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* -------------------------------
+   TYPOGRAPHY
+--------------------------------- */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  color: #264653;
+}
+
+p, a, span {
+  font-size: 14px;
+  color: #8D99AE; /* secondary text */
+}
+
+/* -------------------------------
+   BUTTONS
+--------------------------------- */
+button,
+.input-button {
+  background-color: #2A9D8F; /* green accent */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+button:hover {
+  background-color: #238479;
+}
+
+.button-orange {
+  background-color: #FF892C;
+  color: #fff;
+}
+
+.button-orange:hover {
+  background-color: #e67920;
+}
+
+/* -------------------------------
+   INPUTS
+--------------------------------- */
+input, select, textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #8D99AE;
+  outline: none;
+  font-size: 14px;
+  background-color: #fff;
+  color: #264653;
+}
+
+input:focus, textarea:focus {
+  border-color: #FF892C;
+}
+
+/* -------------------------------
+   CARD / BOX / CONTAINER
+--------------------------------- */
+.card, .profile-box, .form-box {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.14);
+  margin-bottom: 20px;
+}
+
+.container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* -------------------------------
+   RESPONSIVE
+--------------------------------- */
+@media (max-width: 900px) {
+  .container {
+    padding: 10px;
+  }
+}

@@ -1,78 +1,102 @@
+/* =========================
+   FOOTER BASE
+========================= */
 .footer {
-  background: #FF8A2A; /* the same orange as your screenshot */
-  padding: 40px 50px;
-  color: #222;
+  width: 100%;
+  background-color: #FF892C; /* Main orange */
+  padding: 50px 0;
+  display: flex;
+  justify-content: center;
 }
 
+/* Centered content */
 .footer-container {
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 40px;
+
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
+
+  color: #264653; /* Main text color */
 }
 
+/* =========================
+   LEFT SIDE
+========================= */
 .footer-left {
   flex: 1;
-  min-width: 200px;
+  min-width: 240px;
 }
 
 .footer-logo {
   font-size: 28px;
+  font-weight: 700;
+  color: #264653; /* Main text color */
   margin-bottom: 20px;
 }
 
-.footer-socials a {
-  color: #555;
+.footer-socials {
+  display: flex;
+  gap: 15px;
   font-size: 22px;
-  margin-right: 15px;
-  text-decoration: none;
+}
+
+.footer-socials a {
+  color: #264653; /* Main text */
   transition: 0.2s;
 }
 
 .footer-socials a:hover {
-  color: #222;
+  color: #2A9D8F; /* Accent green */
 }
 
+/* =========================
+   RIGHT COLUMNS
+========================= */
 .footer-links {
   display: flex;
-  gap: 60px;
+  gap: 80px;
   flex: 2;
-  min-width: 400px;
   justify-content: flex-end;
+  min-width: 400px;
 }
 
 .footer-column {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .footer-column h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #264653; /* Main text */
   margin-bottom: 10px;
-  font-size: 20px;
-  color: #000;
 }
 
 .footer-column a {
-  color: #777;
-  text-decoration: none;
-  margin-bottom: 6px;
+  color: #8D99AE; /* Secondary text */
   transition: 0.2s;
 }
 
 .footer-column a:hover {
-  color: #000;
+  color: #2A9D8F; /* Accent green */
 }
 
-
-/* Responsive */
-@media (max-width: 800px) {
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 900px) {
   .footer-container {
     flex-direction: column;
-    text-align: center;
+    gap: 30px;
   }
 
   .footer-links {
-    justify-content: center;
-    margin-top: 30px;
+    justify-content: flex-start;
+    gap: 40px;
   }
 }

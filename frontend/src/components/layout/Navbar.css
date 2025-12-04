@@ -1,0 +1,95 @@
+/* ============================
+   NAVBAR BASE
+============================ */
+.navbar {
+  width: 100%;
+  background-color: #FF892C; /* main orange */
+  padding: 14px 0;
+  display: flex;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.navbar-container {
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 40px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ============================
+   LOGO
+============================ */
+.navbar-logo a {
+  font-size: 26px;
+  font-weight: 700;
+  color: #264653; /* main text */
+}
+
+/* ============================
+   LINK GROUP
+============================ */
+.navbar-links {
+  display: flex;
+  gap: 30px;
+}
+
+.navbar-links a {
+  color: #264653; /* main text */
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.navbar-links a:hover {
+  color: #2A9D8F; /* green accent */
+}
+
+/* ============================
+   LOGIN/SIGNUP BUTTONS
+============================ */
+.navbar-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+/* Outline button */
+.nav-btn-outline {
+  border: 2px solid #264653;
+  color: #264653;
+}
+
+.nav-btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Filled button */
+.nav-btn-filled {
+  background-color: #2A9D8F; /* green accent */
+  color: #fff;
+}
+
+.nav-btn-filled:hover {
+  background-color: #238479;
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
+@media (max-width: 900px) {
+  .navbar-links {
+    display: none;
+  }
+}
