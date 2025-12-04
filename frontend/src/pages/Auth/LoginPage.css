@@ -1,0 +1,162 @@
+/* Center the login box inside page-content */
+.login-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ------------------------------
+   LOGIN BOX
+------------------------------- */
+.login-box {
+  background-color: #F7C8A8; /* soft peach used in your mockup */
+  padding: 40px 50px;
+  border-radius: 28px;
+  width: 350px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Fade-in + slide-up animation */
+.animate {
+  animation: fadeSlideUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ------------------------------
+   INPUT FIELDS
+------------------------------- */
+.input-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
+  border: none;
+  background-color: #FF892C;
+  color: white;
+  font-size: 14px;
+}
+
+.login-box input::placeholder {
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* Password toggle icon */
+.password-group {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  color: white;
+  opacity: 0.85;
+  transition: 0.2s;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+
+/* ------------------------------
+   VALIDATION STYLES
+------------------------------- */
+input.error {
+  border: 2px solid #E63946 !important; /* red border */
+}
+
+.error-text {
+  color: #E63946;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* ------------------------------
+   BUTTONS
+------------------------------- */
+.btn-primary {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 10px;
+  border: none;
+  background-color: #2A9D8F;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #238479;
+}
+
+.divider {
+  margin: 10px 0 20px;
+  color: #8D99AE;
+  font-size: 14px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 2px;
+  background-color: #dab498;
+}
+
+.divider::before {
+  left: 0;
+}
+.divider::after {
+  right: 0;
+}
+
+/* Make <Link> behave like a button */
+.btn-secondary {
+  display: block;              /* makes it act like the button */
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 10px;
+  background-color: #2A9D8F;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  text-align: center;          /* center text */
+  text-decoration: none;       /* remove underline */
+  transition: 0.2s;
+  cursor: pointer;             /* pointer cursor like button */
+  margin-top: 10px;
+}
+
+.btn-secondary:hover {
+  background-color: #238479;
+}

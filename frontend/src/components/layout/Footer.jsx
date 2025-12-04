@@ -22,23 +22,14 @@ export default function Footer(){
 
                     <div className="footer-column">
                         <h3>Artists</h3>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
                     </div>
 
                     <div className="footer-column">
                         <h3>Bands</h3>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
                     </div>
 
                     <div className="footer-column">
                         <h3>Events</h3>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
-                        <a href="#">Page</a>
                     </div>
 
                     </div>

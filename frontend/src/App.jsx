@@ -5,15 +5,17 @@ import AppRouter from './routes/AppRouter.jsx';
 
 
 
-function App() {
+export default function App() {
   return (
-    <>
+    <div className="app-wrapper">
       <Navbar />
-      <AppRouter />
-      
+
+      <main className="page-content">
+        <AppRouter />
+      </main>
+
       <Footer />
-    </>
+    </div>
   );
 }
 
-export default App;

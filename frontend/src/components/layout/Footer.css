@@ -1,10 +1,10 @@
 /* =========================
-   FOOTER BASE
+   FOOTER BASE (smaller)
 ========================= */
 .footer {
   width: 100%;
-  background-color: #FF892C; /* Main orange */
-  padding: 50px 0;
+  background-color: #FF892C;
+  padding: 25px 0;      /* reduced from 50px */
   display: flex;
   justify-content: center;
 }
@@ -13,90 +13,62 @@
 .footer-container {
   width: 100%;
   max-width: 1400px;
-  padding: 0 40px;
-
+  padding: 0 30px;      /* slightly smaller padding */
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;  /* center vertically */
   flex-wrap: wrap;
-
-  color: #264653; /* Main text color */
+  color: #264653;
 }
 
 /* =========================
-   LEFT SIDE
+   LEFT SIDE (smaller)
 ========================= */
 .footer-left {
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
 }
 
 .footer-logo {
-  font-size: 28px;
+  font-size: 22px;     /* smaller title */
   font-weight: 700;
-  color: #264653; /* Main text color */
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* reduced space */
 }
 
+/* Social icons smaller */
 .footer-socials {
   display: flex;
-  gap: 15px;
-  font-size: 22px;
-}
-
-.footer-socials a {
-  color: #264653; /* Main text */
-  transition: 0.2s;
-}
-
-.footer-socials a:hover {
-  color: #2A9D8F; /* Accent green */
+  gap: 10px;
+  font-size: 16px;     /* reduced */
 }
 
 /* =========================
-   RIGHT COLUMNS
+   RIGHT SIDE (smaller)
 ========================= */
 .footer-links {
   display: flex;
-  gap: 80px;
+  gap: 40px;           /* reduced from 80px */
   flex: 2;
   justify-content: flex-end;
-  min-width: 400px;
-}
-
-.footer-column {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  min-width: 250px;     /* reduced */
 }
 
 .footer-column h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #264653; /* Main text */
-  margin-bottom: 10px;
-}
-
-.footer-column a {
-  color: #8D99AE; /* Secondary text */
-  transition: 0.2s;
-}
-
-.footer-column a:hover {
-  color: #2A9D8F; /* Accent green */
+  font-size: 16px;     /* reduced */
+  margin-bottom: 4px;  /* reduced spacing */
 }
 
 /* =========================
-   RESPONSIVE
+   RESPONSIVE (adjusted)
 ========================= */
 @media (max-width: 900px) {
   .footer-container {
     flex-direction: column;
-    gap: 30px;
+    gap: 15px;         /* smaller stack spacing */
   }
 
   .footer-links {
     justify-content: flex-start;
-    gap: 40px;
+    gap: 20px;         /* reduced */
   }
 }
