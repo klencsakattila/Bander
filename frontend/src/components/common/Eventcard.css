@@ -1,0 +1,33 @@
+.event-card {
+  width: 280px;
+}
+
+.event-image {
+  width: 100%;
+  height: auto;
+  margin-bottom: 12px;
+}
+
+.event-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #264653;
+  margin-bottom: 8px;
+}
+
+.event-description {
+  font-size: 14px;
+  color: #8D99AE;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.event-link {
+  font-size: 14px;
+  color: #2A9D8F;
+  text-decoration: none;
+}
+
+.event-link:hover {
+  text-decoration: underline;
+}
