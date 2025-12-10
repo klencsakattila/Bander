@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "../pages/HomePage.jsx";
 import LoginPage from "../pages/Auth/LoginPage.jsx";
+import EditProfileSettings from "../pages/Profile/EditProfilePage.jsx";
 import SignUpPage from "../pages/Auth/RegisterPage.jsx";
 
 
@@ -23,6 +24,10 @@ export default function AppRouter() {
 
       {/* Register Page */}
       <Route path="/signup" element={<SignUpPage />} />
+
+
+      <Route path="/profile/settings" element={<EditProfileSettings />} />
+
 
     </Routes>
   );

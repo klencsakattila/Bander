@@ -1,0 +1,114 @@
+.profile-settings-page {
+    display: flex;
+    gap: 50px;
+    padding: 40px 80px;
+    background-color: #FFF3E0;
+  }
+  
+  /* ---------------------------------------
+     LEFT PROFILE CARD
+  ---------------------------------------- */
+  .profile-card {
+    width: 230px;
+    padding: 20px;
+    background-color: #E8D7C7;
+    border-radius: 20px;
+    text-align: left;
+  }
+  
+  .profile-avatar {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .profile-username {
+    font-size: 18px;
+    font-weight: 600;
+    color: #264653;
+    margin-bottom: 10px;
+  }
+  
+  .profile-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #264653;
+  }
+  
+  .profile-text {
+    font-size: 13px;
+    color: #8D99AE;
+    margin-bottom: 10px;
+  }
+  
+  /* ---------------------------------------
+     RIGHT FORM
+  ---------------------------------------- */
+  .profile-form {
+    flex: 1;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 40px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #264653;
+    margin-bottom: 6px;
+  }
+  
+  /* Inputs use global styling, but let's refine */
+  .form-group input,
+  .form-group textarea {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #8D99AE;
+    background-color: #FFFFFF;
+    color: #264653;
+  }
+  
+  .form-group textarea {
+    height: 70px;
+    resize: none;
+  }
+  
+  .save-btn {
+    margin-top: 20px;
+    padding: 12px 26px;
+    background-color: #2A9D8F;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s ease;
+  }
+  
+  .save-btn:hover {
+    background-color: #238479;
+  }
+  
+  /* ---------------------------------------
+     RESPONSIVE
+  ---------------------------------------- */
+  @media (max-width: 900px) {
+    .profile-settings-page {
+      flex-direction: column;
+      padding: 20px;
+    }
+  
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
