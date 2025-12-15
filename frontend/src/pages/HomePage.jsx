@@ -87,6 +87,7 @@ export default function HomePage() {
           {artists.map((artist) => (
             <ArtistCard
               key={artist.id}
+              id={artist.id}
               image={placeholder}
               username={artist.userName}
               description={`${artist.firstName} ${artist.lastName} from ${artist.city}`}
@@ -101,13 +102,18 @@ export default function HomePage() {
         <h2>Bands</h2>
 
         <div className="bands-layout">
-
           <div className="bands-list">
             {bands.map((band) => (
-              <div key={band.id} className="band-item">
-                <h4>{band.bandName}</h4>
-                <p>Location: {band.bandLocation}</p>
-              </div>
+              <Link
+                key={band.id}
+                to={`/band/${band.id}`}
+                className="band-link"
+              >
+                <div className="band-item">
+                  <h4>{band.bandName}</h4>
+                  <p>Location: {band.bandLocation}</p>
+                </div>
+              </Link>
             ))}
 
             <Link to="/bands" className="see-all-btn">
@@ -118,6 +124,7 @@ export default function HomePage() {
           <img className="band-image" src={placeholder} alt="Band" />
         </div>
       </section>
+
 
 
       {/* Events / Posts Section */}

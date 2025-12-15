@@ -19,3 +19,11 @@ export async function getLatestBandPosts(limit) {
 
   return await res.json();
 }
+export async function getBandById(bandId) {
+  const res = await fetch(`${API_URL}/band/${bandId}`);
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch band details");
+  }
+  return await res.json();
+}
