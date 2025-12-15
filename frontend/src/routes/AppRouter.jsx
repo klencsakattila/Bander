@@ -13,7 +13,6 @@ export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      {/* <Route path="/artists" element={<ArtistFinderPage />} /> */}
 
       {/* Automatically redirect root to login */}
       <Route path="/" element={<Navigate to="/login" />} />
@@ -27,12 +26,16 @@ export default function AppRouter() {
       {/* Register Page */}
       <Route path="/signup" element={<SignUpPage />} />
 
+      {/* Edit Profile Settings Page */}
       <Route path="/profile/settings" element={<EditProfileSettings />} />
 
+      {/* Artist Profile Page */}
       <Route path="/artist/:id" element={<ArtistProfilePage />} />
       
+      {/* Band Profile Page */}
       <Route path="/band/:id" element={<BandProfilePage />} />
 
+      {/* Artist Finder Page */}
       <Route path="/artists" element={<ArtistFinderPage />} />
 
     </Routes>

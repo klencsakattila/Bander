@@ -14,21 +14,35 @@ export default function ArtistFinderPage() {
     band: "",
   });
   const [loading, setLoading] = useState(true);
+  const [cities, setCities] = useState([]);
+
 
   useEffect(() => {
     async function loadArtists() {
       try {
         const data = await getAllUsers();
         setArtists(data);
+  
+        // 🔹 Extract unique cities from backend data
+        const uniqueCities = [
+          ...new Set(
+            data
+              .map((artist) => artist.city)
+              .filter(Boolean) // remove null / undefined
+          ),
+        ];
+  
+        setCities(uniqueCities);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
-
+  
     loadArtists();
   }, []);
+  
 
   const filteredArtists = artists.filter((artist) => {
     return (
@@ -58,11 +72,22 @@ export default function ArtistFinderPage() {
 
         {/* FILTERS */}
         <aside className="artist-filters">
-          <label>City</label>
-          <select onChange={(e) => setFilters({ ...filters, city: e.target.value })}>
-            <option value="">All</option>
-            <option value="Budapest">Budapest</option>
-          </select>
+        <label>City</label>
+        <select
+          value={filters.city}
+          onChange={(e) =>
+            setFilters({ ...filters, city: e.target.value })
+          }
+        >
+          <option value="">All</option>
+
+          {cities.map((city) => (
+            <option key={city} value={city}>
+              {city}
+            </option>
+          ))}
+        </select>
+
 
           <label>Instrument(s)</label>
           <select>
