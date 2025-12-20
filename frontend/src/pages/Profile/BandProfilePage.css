@@ -1,0 +1,127 @@
+.band-profile-page {
+  background-color: #FFF3E0;
+}
+
+/* Header */
+.band-header {
+  height: 160px;
+  background: linear-gradient(to right, #000, #222);
+  display: flex;
+  align-items: center;
+  padding-left: 80px;
+  color: white;
+}
+
+/* Top section */
+.band-top {
+  display: flex;
+  gap: 40px;
+  padding: 40px 80px;
+}
+
+/* Band info card */
+.band-info-card {
+  display: flex;
+  gap: 20px;
+  background-color: #E0E0E0;
+  padding: 20px;
+  border-radius: 12px;
+  width: 60%;
+}
+
+.band-info-card img {
+  width: 120px;
+  border-radius: 8px;
+}
+
+.band-info-text h3 {
+  color: #264653;
+}
+
+.band-info-text p {
+  color: #8D99AE;
+  font-size: 14px;
+}
+
+/* Application */
+.band-apply {
+  background-color: #FFF;
+  padding: 20px;
+  border-radius: 12px;
+  width: 30%;
+}
+
+.band-apply h4 {
+  margin-bottom: 10px;
+}
+
+.band-apply input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.band-apply button {
+  width: 100%;
+}
+
+/* Bottom */
+.band-bottom {
+  display: flex;
+  gap: 60px;
+  padding: 0 80px 60px;
+}
+
+/* Members */
+.band-members {
+  width: 30%;
+}
+
+.band-members ul {
+  list-style: none;
+  padding: 0;
+}
+
+.band-members li {
+  font-size: 14px;
+  color: #8D99AE;
+  margin-bottom: 6px;
+}
+
+/* Events */
+.band-events {
+  display: flex;
+  gap: 30px;
+}
+
+.event-card {
+  width: 220px;
+}
+
+.event-card img {
+  width: 100%;
+}
+
+.event-card p {
+  font-size: 14px;
+}
+
+.event-card span {
+  color: #2A9D8F;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .band-top,
+  .band-bottom {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .band-info-card,
+  .band-apply,
+  .band-members {
+    width: 100%;
+  }
+}

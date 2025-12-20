@@ -9,7 +9,7 @@ You can either download the ZIP or clone the repository.
 ## **1. Clone the Repository**
 
 ```sh
-git clone https://github.com/yourusername/bander.git
+git clone https://github.com/klencsakattila/bander.git
 cd bander
 ```
 

@@ -1,6 +1,6 @@
-import "./NewArtistCard.css";
+import { Link } from "react-router-dom";
 
-export default function NewArtistCard({ image, username, description }) {
+export default function NewArtistCard({ image, username, description, id }) {
   return (
     <div className="artist-card">
       <img className="artist-image" src={image} alt={username} />
@@ -9,9 +9,9 @@ export default function NewArtistCard({ image, username, description }) {
         <h3 className="artist-name">{username}</h3>
         <p className="artist-description">{description}</p>
 
-        <a className="artist-link" href="#" to={'/artist/' + username}>
+        <Link className="artist-link" to={`/artist/${id}`}>
           See more…
-        </a>
+        </Link>
       </div>
     </div>
   );

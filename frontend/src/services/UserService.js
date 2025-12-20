@@ -9,3 +9,10 @@ export async function getAllUsers() {
 
   return await res.json();
 }
+export async function getUserById(userId) {
+  const res = await fetch(`${API_URL}/user/${userId}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch user details");
+  }
+  return await res.json();
+}
