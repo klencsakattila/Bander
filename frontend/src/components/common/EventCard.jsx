@@ -1,5 +1,5 @@
 import "./EventCard.css";
-import eventBadge from "../../assets/images/event-badge.png"; // or your image
+import eventBadge from "../../assets/images/event-badge.png"; 
 
 export default function EventCard({ bandName, eventName, date, description }) {
   return (

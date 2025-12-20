@@ -24,10 +24,9 @@ export default function AppRouter() {
 
       {/* Register Page */}
       <Route path="/signup" element={<SignUpPage />} />
-
-
+      
+      {/* Edit Profile Settings Page */}
       <Route path="/profile/settings" element={<EditProfileSettings />} />
-
 
     </Routes>
   );
