@@ -1,3 +1,4 @@
+/*
 import jwt from "jsonwebtoken"
 import config from "../config/config"
 
@@ -21,3 +22,4 @@ const verifyToken = (req:any,res:any,next:any) => {
 }
 
 export default verifyToken
+*/

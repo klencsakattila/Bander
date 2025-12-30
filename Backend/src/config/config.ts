@@ -1,3 +1,4 @@
+/*
 import dotenv from "dotenv"
 import path from "path"
 dotenv.config()
@@ -17,3 +18,4 @@ const config: any = {
 
 }
 export default config
+*/
