@@ -1,3 +1,4 @@
+-- Active: 1767093792536@@localhost@3306@mysql
 -- ======================================================
 -- Database
 -- ======================================================
@@ -126,3 +127,61 @@ CREATE TABLE messages (
 -- ======================================================
 -- Reports
 --
+-- Demo seed data
+INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date) VALUES
+('alice','alice@example.com','demo-hash','Alice','Smith','Budapest','1990-05-14'),
+('bob','bob@example.com','demo-hash','Bob','Jones','Debrecen','1988-11-02'),
+('charlie','charlie@example.com','demo-hash','Charlie','Kovács','Szeged','1995-07-22');
+
+INSERT INTO bands (name,city) VALUES
+('The Rockets','Budapest'),
+('Blue Notes','Szeged');
+
+INSERT INTO band_members (band_id,user_id,role) VALUES
+(1,1,'vocals'),
+(1,2,'guitar'),
+(2,3,'drums');
+
+INSERT INTO instruments (name) VALUES
+('Guitar'),
+('Drums'),
+('Bass'),
+('Vocals');
+
+INSERT INTO user_instruments (user_id,instrument_id,skill_level) VALUES
+(1,4,'advanced'),
+(2,1,'intermediate'),
+(3,2,'beginner');
+
+INSERT INTO musical_styles (name) VALUES
+('Rock'),
+('Jazz'),
+('Pop');
+
+INSERT INTO user_styles (user_id,style_id) VALUES
+(1,1),
+(2,1),
+(2,3),
+(3,2);
+
+INSERT INTO band_styles (band_id,style_id) VALUES
+(1,1),
+(1,3),
+(2,2);
+
+INSERT INTO posts (user_id,post_type,post_message) VALUES
+(1,'search','Looking for a bassist for weekend gigs.'),
+(2,'announcement','We have a rehearsal this Friday.'),
+(NULL,'general','Welcome to the Bander community!');
+
+INSERT INTO threads (created_at) VALUES (NOW()),(NOW());
+
+INSERT INTO thread_users (thread_id,user_id) VALUES
+(1,1),(1,2),(2,2),(2,3);
+
+INSERT INTO messages (thread_id,sender_id,message) VALUES
+(1,1,'Hi Bob, are you available for rehearsal?'),
+(1,2,'Yes, Alice! Friday works.'),
+(2,3,'Hi, anyone playing this weekend?');
+
+-- End demo seed data
