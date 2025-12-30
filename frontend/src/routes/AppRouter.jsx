@@ -6,8 +6,7 @@ import SignUpPage from "../pages/Auth/RegisterPage.jsx";
 import ArtistProfilePage from "../pages/Profile/ArtistProfilePage.jsx";
 import BandProfilePage from "../pages/Profile/BandProfilePage.jsx";
 import ArtistFinderPage from "../pages/Finder/ArtistFinderPage.jsx";
-
-// import ArtistFinderPage from "../pages/ArtistFinderPage.jsx"; // example
+import BandFinderPage from "../pages/Finder/BandFinderPage.jsx";
 
 export default function AppRouter() {
   return (
@@ -25,12 +24,6 @@ export default function AppRouter() {
 
       {/* Register Page */}
       <Route path="/signup" element={<SignUpPage />} />
-<<<<<<< HEAD
-      
-      {/* Edit Profile Settings Page */}
-      <Route path="/profile/settings" element={<EditProfileSettings />} />
-
-=======
 
       {/* Edit Profile Settings Page */}
       <Route path="/profile/settings" element={<EditProfileSettings />} />
@@ -44,7 +37,9 @@ export default function AppRouter() {
       {/* Artist Finder Page */}
       <Route path="/artists" element={<ArtistFinderPage />} />
 
->>>>>>> 7b422ec1374e8e072e74dbcf56638f9fcdf2f658
+      {/*Band Finder Page */}
+      <Route path="/bands" element={<BandFinderPage />} />
+
     </Routes>
   );
 }

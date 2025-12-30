@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { root } from "../dog/dogController"
+import { root } from "../controllers/apiController"
 
 const router: Router = Router()
 router.get('/',root)
