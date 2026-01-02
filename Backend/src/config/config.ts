@@ -1,11 +1,18 @@
-/*
 import dotenv from "dotenv"
 import path from "path"
 dotenv.config()
 
 class DBConfig {
+    host: string;
+    user: string;
+    password: string;
+    database: string;
+
     constructor() {
-        return { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DATABASE }
+        this.host = process.env.DB_HOST ?? process.env.MYSQL_HOST ?? 'localhost';
+        this.user = process.env.DB_USER ?? process.env.MYSQL_USER ?? 'root';
+        this.password = process.env.DB_PASSWORD ?? process.env.MYSQL_PASSWORD ?? '';
+        this.database = process.env.DATABASE ?? process.env.MYSQL_DATABASE ?? 'bander';
     }
 }
 
@@ -18,4 +25,3 @@ const config: any = {
 
 }
 export default config
-*/
