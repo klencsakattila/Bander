@@ -1,0 +1,143 @@
+.edit-band-page {
+  background: #fff3e0;
+  padding: 28px 28px 40px;
+}
+
+/* Big centered container */
+.edit-band-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: transparent;
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* LEFT band card */
+.band-card {
+  width: 230px;
+  background: #d9d9d9;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.band-avatar {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.band-title {
+  margin: 12px 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #264653;
+}
+
+.band-meta p {
+  margin: 6px 0;
+  font-size: 13px;
+  color: rgba(38, 70, 83, 0.55);
+}
+
+/* RIGHT forms area */
+.band-forms {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  padding-top: 8px;
+}
+
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #264653;
+}
+
+.form-subtitle {
+  margin: 10px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #264653;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px; /* keeps inputs small like the mock */
+}
+
+.field label {
+  font-size: 12px;
+  color: #264653;
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  padding: 0 10px;
+  font-size: 12px;
+  outline: none;
+}
+
+/* Buttons */
+.btn {
+  width: 140px;
+  height: 26px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.btn.primary {
+  background: #2a9d8f;
+  color: white;
+  margin-top: 6px;
+}
+
+/* small toast at bottom */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: rgba(38, 70, 83, 0.92);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .edit-band-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .band-forms {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .field {
+    max-width: 100%;
+  }
+}

@@ -7,14 +7,13 @@ import ArtistProfilePage from "../pages/Profile/ArtistProfilePage.jsx";
 import BandProfilePage from "../pages/Profile/BandProfilePage.jsx";
 import ArtistFinderPage from "../pages/Finder/ArtistFinderPage.jsx";
 import BandFinderPage from "../pages/Finder/BandFinderPage.jsx";
+import MessagesPage from "../pages/Messages/MessagePage.jsx";
+import EditBandPage from "../pages/Band/EditBandPage.jsx";
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-
-      {/* Automatically redirect root to login */}
-      <Route path="/" element={<Navigate to="/login" />} />
 
       {/* Login Page */}
       <Route path="/login" element={<LoginPage />} />
@@ -34,11 +33,17 @@ export default function AppRouter() {
       {/* Band Profile Page */}
       <Route path="/band/:id" element={<BandProfilePage />} />
 
+      {/* Edit Band Page */}
+      <Route path="/band/settings" element={<EditBandPage />} />
+
       {/* Artist Finder Page */}
       <Route path="/artists" element={<ArtistFinderPage />} />
 
       {/*Band Finder Page */}
       <Route path="/bands" element={<BandFinderPage />} />
+
+      {/* Messages Page -> should be with id */}
+      <Route path="/messages" element={<MessagesPage />} />
 
     </Routes>
   );

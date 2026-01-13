@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000"; // change if needed
+const API_URL = "http://localhost:3000";
 
 export async function getAllBands() {
   const res = await fetch(`${API_URL}/band`);
