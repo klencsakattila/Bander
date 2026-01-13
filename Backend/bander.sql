@@ -125,6 +125,42 @@ CREATE TABLE messages (
 );
 
 -- ======================================================
+-- Functions, Procedures, Triggers
+CREATE FUNCTION login(email VARCHAR(30), pass VARCHAR(100))
+RETURNS INTEGER DETERMINISTIC
+BEGIN
+    DECLARE OK INTEGER;
+    SET OK = 0;
+    SELECT id INTO OK FROM users WHERE users.email = email AND users.password_hash = SHA2(pass, 256);
+    RETURN OK;
+END
+
+-- Trigger: hash passwords on insert if not already SHA-256
+DELIMITER $$
+CREATE TRIGGER hash_user_password_before_insert
+BEFORE INSERT ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.password_hash IS NOT NULL AND NOT (NEW.password_hash REGEXP '^[0-9A-Fa-f]{64}$') THEN
+        SET NEW.password_hash = SHA2(NEW.password_hash, 256);
+    END IF;
+END $$
+DELIMITER ;
+
+-- Trigger: hash passwords on update if changed and not already SHA-256
+DELIMITER $$
+CREATE TRIGGER hash_user_password_before_update
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.password_hash IS NOT NULL AND NEW.password_hash <> OLD.password_hash
+       AND NOT (NEW.password_hash REGEXP '^[0-9A-Fa-f]{64}$') THEN
+        SET NEW.password_hash = SHA2(NEW.password_hash, 256);
+    END IF;
+END $$
+DELIMITER ;
+
+-- ======================================================
 -- Reports
 --
 -- Demo seed data
@@ -169,10 +205,10 @@ INSERT INTO band_styles (band_id,style_id) VALUES
 (1,3),
 (2,2);
 
-INSERT INTO posts (user_id,post_type,post_message) VALUES
-(1,'search','Looking for a bassist for weekend gigs.'),
-(2,'announcement','We have a rehearsal this Friday.'),
-(NULL,'general','Welcome to the Bander community!');
+INSERT INTO posts (band_id,post_type,post_message) VALUES
+(1,'announcement','The Rockets have a gig this Saturday at the Blue Club.'),
+(2,'announcement','Blue Notes released a new single this month.'),
+(1,'search','The Rockets are looking for a keyboard player for weekend shows.');
 
 INSERT INTO threads (created_at) VALUES (NOW()),(NOW());
 
