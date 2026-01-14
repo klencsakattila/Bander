@@ -1,4 +1,5 @@
 import './Footer.css';
+import { FaInstagram, FaFacebook, FaYoutube, FaSpotify } from "react-icons/fa";
 
 
 export default function Footer(){
@@ -11,10 +12,10 @@ export default function Footer(){
                         <h2 className="footer-logo">Bander</h2>
 
                         <div className="footer-socials">
-                            <a href="#">asd</a>
-                            <a href="#">asd</a>
-                            <a href="#">asd</a>
-                            <a href="#">asd</a>
+                            <FaSpotify />
+                            <FaInstagram />
+                            <FaFacebook />
+                            <FaYoutube />
                         </div>
                     </div>
 

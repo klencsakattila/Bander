@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import "./RegisterPage.css";
+import "./SignUpPage.css";
 
 export default function SignUpPage() {
   const [showPassword1, setShowPassword1] = useState(false);

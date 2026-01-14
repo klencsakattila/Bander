@@ -1,29 +1,14 @@
-const API_URL = "http://localhost:3000"; // change if needed
+import { apiFetch } from "./apiClient";
 
-export async function getAllBands() {
-  const res = await fetch(`${API_URL}/band`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch bands");
-  }
-
-  return await res.json();
+export async function getAllBands(token) {
+  return apiFetch(`/band`, { token });
 }
 
-export async function getLatestBandPosts(limit) {
-  const res = await fetch(`${API_URL}/band/post/${limit}`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch band posts");
-  }
-
-  return await res.json();
+export async function getLatestBandPosts(limit = 3, token) {
+  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 3));
+  return apiFetch(`/band/post/${safeLimit}`, { token });
 }
-export async function getBandById(bandId) {
-  const res = await fetch(`${API_URL}/band/${bandId}`);
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch band details");
-  }
-  return await res.json();
+export async function getBandById(bandId, token) {
+  return apiFetch(`/band/${bandId}`, { token });
 }

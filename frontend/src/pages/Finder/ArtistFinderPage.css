@@ -72,11 +72,17 @@
 ================================ */
 .artist-card {
   background-color: #D9D9D9;
-  border-radius: 16px;
-  padding: 14px;
+  border-radius: 22px;
+  padding: 16px;
   text-decoration: none;
   transition: 0.2s ease;
   color: inherit;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  overflow: hidden; /* keeps rounded corners clean */
 }
 
 .artist-card:hover {
@@ -85,25 +91,35 @@
 }
 
 /* Avatar */
-.artist-card img {
+.artist-avatar {
   width: 100%;
-  border-radius: 12px;
-  margin-bottom: 10px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
 }
 
-/* Name */
-.artist-card h4 {
-  font-size: 14px;
-  font-weight: 600;
+/* Info box (like in mock) */
+.artist-info {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 12px 12px;
+}
+
+/* Username */
+.artist-username {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
   color: #264653;
-  margin-bottom: 4px;
 }
 
-/* Meta */
-.artist-card p {
-  font-size: 12px;
-  color: #8D99AE;
-  margin-bottom: 2px;
+/* Lines */
+.artist-line {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.2;
+  color: rgba(38, 70, 83, 0.55);
 }
 
 /* ===============================

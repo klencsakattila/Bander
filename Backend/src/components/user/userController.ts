@@ -124,7 +124,7 @@ export async function getUserById(req: Request, res: Response) {
 };
 
 export async function getUsersLimit(req: Request, res: Response) {
-    const limitParam = parseInt(req.params.limit || req.query.limit);
+    const limitParam = parseInt((req.params.limit || req.query.limit) as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
 
     const connection = await mysql.createConnection(config.database);

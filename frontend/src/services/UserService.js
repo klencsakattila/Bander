@@ -1,18 +1,28 @@
-const API_URL = "http://localhost:3000"; // change if needed
+import { apiFetch } from "./apiClient";
 
-export async function getAllUsers() {
-  const res = await fetch(`${API_URL}/user`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch users");
-  }
-
-  return await res.json();
+export async function getUsersLimit(limit = 10, token) {
+  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 10));
+  return apiFetch(`/users/limit/${safeLimit}`, { token });
 }
-export async function getUserById(userId) {
-  const res = await fetch(`${API_URL}/user/${userId}`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch user details");
-  }
-  return await res.json();
+
+export async function getUserById(id, token) {
+  return apiFetch(`/user/${id}`, { token });
+}
+
+
+export async function getUsersTemp() {
+  const userIds = [1, 2, 3];
+
+  const results = await Promise.all(
+    userIds.map(async (id) => {
+      const res = await fetch(`${API_URL}/users/${id}`);
+      if (!res.ok) return null;
+
+      const data = await res.json(); // backend: array
+      return data?.[0] ?? null;       // ha üres, akkor null
+    })
+  );
+
+  // kiszűrjük a null/undefined elemeket
+  return results.filter(Boolean);
 }

@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import "./HomePage.css";
-import ArtistCard from "../components/common/NewArtistCard";
 import placeholder from "../assets/images/default-avatar.png";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-// services
-import { getAllUsers } from "../services/UserService";
+import ArtistCard from "../components/common/NewArtistCard";
+import { getUsersLimit } from "../services/UserService";
 import { getAllBands, getLatestBandPosts } from "../services/BandService";
-import EventCard from "../components/common/EventCard";
 
 export default function HomePage() {
+  const { token, isAuth } = useAuth();
+
   const [artists, setArtists] = useState([]);
   const [bands, setBands] = useState([]);
   const [posts, setPosts] = useState([]);
@@ -18,56 +19,43 @@ export default function HomePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadData() {
+    async function load() {
       try {
-        const [userData, bandData, postData] = await Promise.all([
-          getAllUsers(),
-          getAllBands(),
-          getLatestBandPosts(3) // latest 3 posts
+        setLoading(true);
+        setError("");
+
+        if (!isAuth) {
+          // show demo if not logged in (optional)
+          setArtists([]);
+          setBands([]);
+          setPosts([]);
+          return;
+        }
+
+        const [usersData, bandsData, postsData] = await Promise.all([
+          getUsersLimit(6, token),
+          getAllBands(token),
+          getLatestBandPosts(3, token),
         ]);
 
-        setArtists(userData.slice(0, 3)); // newest users
-        setBands(bandData.slice(0, 4));   // first 4 bands
-        setPosts(postData);
-
-      } catch (err) {
-        setError("Failed to load homepage data.");
+        setArtists(usersData);
+        setBands(bandsData);
+        setPosts(postsData);
+      } catch (e) {
+        setError(e.message || "Failed to load homepage data");
       } finally {
         setLoading(false);
       }
     }
 
-    loadData();
-  }, []);
+    load();
+  }, [token, isAuth]);
 
-  if (loading) {
-    return (
-      <div className="homepage">
-        <div className="loading">
-          <div className="spinner"></div>
-          <p>Loading homepage…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="homepage">
-        <div className="error-box">
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <p style={{ padding: 40 }}>Loading homepage...</p>;
+  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
 
   return (
     <div className="homepage">
-
-      {/* Hero Section */}
       <header className="homepage-hero">
         <h1>Bander - musician finder</h1>
         <p>
@@ -78,37 +66,28 @@ export default function HomePage() {
         <Link to="/artists" className="hero-btn">Artist Finder</Link>
       </header>
 
-
-      {/* New Artists Section */}
       <section className="homepage-section">
         <h2>New Artists</h2>
-
         <div className="artists-grid">
-          {artists.map((artist) => (
+          {artists.map((a) => (
             <ArtistCard
-              key={artist.id}
-              id={artist.id}
+              key={a.id}
+              id={a.id}
               image={placeholder}
-              username={artist.userName}
-              description={`${artist.firstName} ${artist.lastName} from ${artist.city}`}
+              username={a.username || a.userName}
+              description={`${a.first_name || a.firstName || ""} ${a.last_name || a.lastName || ""}`.trim() || "Artist"}
             />
           ))}
         </div>
       </section>
 
-
-      {/* Bands Section */}
       <section className="homepage-section bands-section">
         <h2>Bands</h2>
 
         <div className="bands-layout">
           <div className="bands-list">
-            {bands.map((band) => (
-              <Link
-                key={band.id}
-                to={`/band/${band.id}`}
-                className="band-link"
-              >
+            {bands.slice(0, 6).map((band) => (
+              <Link key={band.id} to={`/band/${band.id}`} className="band-link">
                 <div className="band-item">
                   <h4>{band.bandName}</h4>
                   <p>Location: {band.bandLocation}</p>
@@ -116,46 +95,35 @@ export default function HomePage() {
               </Link>
             ))}
 
-            <Link to="/bands" className="see-all-btn">
-              See all bands
-            </Link>
+            <Link to="/bands" className="see-all-btn">See all bands</Link>
           </div>
 
           <img className="band-image" src={placeholder} alt="Band" />
         </div>
       </section>
 
-
-
-      {/* Events / Posts Section */}
       <section className="homepage-section">
         <h2>Upcoming events</h2>
 
         <div className="events-grid">
-          {posts.map((post) => (
-            <EventCard
-              key={post.id}
-              bandName={`Band #${post.BandId}`}
-              eventName={post.TypeOfPost}
-              date={post.Time}
-              description={post.PostMessage}
-            />
+          {posts.map((p) => (
+            <div key={p.id} className="event-card">
+              <h4>{p.TypeOfPost}</h4>
+              <p>{p.PostMessage}</p>
+              <p className="muted">{p.Time}</p>
+              <Link to={`/band/${p.BandId}`} className="artist-link">See more…</Link>
+            </div>
           ))}
         </div>
       </section>
 
-      
-      {/* Bottom CTA Section */}
       <section className="homepage-cta">
         <h2>For all features</h2>
-
-        <div className="cta-buttons">
-          <Link to="/login" className="cta-login-btn">Log in</Link>
-          <Link to="/signup" className="cta-signup-btn">Sign up</Link>
+        <div className="cta-actions">
+          <Link to="/login" className="nav-btn nav-btn-filled">Log in</Link>
+          <Link to="/signup" className="nav-btn nav-btn-outline">Sign up</Link>
         </div>
       </section>
-
-
     </div>
   );
 }

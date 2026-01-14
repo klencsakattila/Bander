@@ -1,64 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ArtistFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
-import { getAllUsers } from "../../services/UserService";
+import { useAuth } from "../../context/AuthContext";
+import { getUsersLimit } from "../../services/UserService";
 
 export default function ArtistFinderPage() {
+  const { token } = useAuth();
+
   const [artists, setArtists] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({
-    city: "",
-    instrument: "",
-    genre: "",
-    band: "",
-  });
-  const [loading, setLoading] = useState(true);
   const [cities, setCities] = useState([]);
 
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ city: "" });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadArtists() {
+    async function load() {
       try {
-        const data = await getAllUsers();
+        setLoading(true);
+        setError("");
+
+        const data = await getUsersLimit(20, token); // max 20 from backend
         setArtists(data);
-  
-        // 🔹 Extract unique cities from backend data
-        const uniqueCities = [
-          ...new Set(
-            data
-              .map((artist) => artist.city)
-              .filter(Boolean) // remove null / undefined
-          ),
-        ];
-  
+
+        const uniqueCities = [...new Set(data.map(u => u.city).filter(Boolean))].sort();
         setCities(uniqueCities);
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        setError(e.message || "Failed to load artists");
       } finally {
         setLoading(false);
       }
     }
-  
-    loadArtists();
-  }, []);
-  
 
-  const filteredArtists = artists.filter((artist) => {
-    return (
-      artist.userName.toLowerCase().includes(search.toLowerCase()) &&
-      (!filters.city || artist.city === filters.city)
-    );
-  });
+    load();
+  }, [token]);
 
-  if (loading) {
-    return <p style={{ padding: "40px" }}>Loading artists...</p>;
-  }
+  const filteredArtists = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return artists.filter((a) => {
+      const name = (a.username || a.userName || "").toLowerCase();
+      const cityOk = !filters.city || a.city === filters.city;
+      const searchOk = !q || name.includes(q);
+      return cityOk && searchOk;
+    });
+  }, [artists, search, filters.city]);
+
+  if (loading) return <p style={{ padding: 40 }}>Loading artists...</p>;
+  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
 
   return (
     <div className="artist-finder-page">
-
-      {/* SEARCH */}
       <div className="artist-search">
         <input
           type="text"
@@ -69,59 +63,33 @@ export default function ArtistFinderPage() {
       </div>
 
       <div className="artist-finder-layout">
-
-        {/* FILTERS */}
         <aside className="artist-filters">
-        <label>City</label>
-        <select
-          value={filters.city}
-          onChange={(e) =>
-            setFilters({ ...filters, city: e.target.value })
-          }
-        >
-          <option value="">All</option>
-
-          {cities.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
-
-
-          <label>Instrument(s)</label>
-          <select>
+          <label>City</label>
+          <select
+            value={filters.city}
+            onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))}
+          >
             <option value="">All</option>
-          </select>
-
-          <label>Genre(s)</label>
-          <select>
-            <option value="">All</option>
-          </select>
-
-          <label>Band</label>
-          <select>
-            <option value="">All</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
         </aside>
 
-        {/* RESULTS */}
         <div className="artist-grid">
           {filteredArtists.map((artist) => (
             <Link
-              to={`/artist/${artist.id}`}
               key={artist.id}
+              to={`/artist/${artist.id}`}
               className="artist-card"
             >
-              <img src={placeholder} alt={artist.userName} />
-
-              <h4>{artist.userName}</h4>
-              <p>{artist.firstName} {artist.lastName}</p>
+              <img src={placeholder} alt={artist.username || artist.userName} />
+              <h4>{artist.username || artist.userName}</h4>
+              <p>{artist.first_name || artist.firstName} {artist.last_name || artist.lastName}</p>
               <p>{artist.city}</p>
             </Link>
           ))}
         </div>
-
       </div>
     </div>
   );

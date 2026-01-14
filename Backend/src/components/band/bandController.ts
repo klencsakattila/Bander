@@ -3,7 +3,7 @@ import mysql from "mysql2/promise";
 import config from "../../config/config";
 
 export async function getBandsLimit(req: Request, res: Response) {
-    const limitParam = parseInt(req.params.limit || req.query.limit);
+    const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
 
     const connection = await mysql.createConnection(config.database);
@@ -23,7 +23,7 @@ export async function getBandsLimit(req: Request, res: Response) {
 }
 
 export async function getLatestBandPosts(req: Request, res: Response) {
-    const limitParam = parseInt(req.params.limit || req.query.limit);
+    const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
 
     const connection = await mysql.createConnection(config.database);
