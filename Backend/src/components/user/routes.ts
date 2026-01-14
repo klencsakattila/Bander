@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { getUserById, signIn, getUsersLimit } from "./userController";
+import { getUserById, signIn, getUsersLimit, signUp } from "./userController";
 import { verifyToken } from "../../middleware/auth";
 
 const router: Router = Router();
 
 // Public
+router.post('/register', signUp);
 router.post('/login', signIn);
 
 // Protected - requires token in header ('x-access-token') or ?token query/body
