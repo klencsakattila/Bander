@@ -1,19 +1,14 @@
-const API_URL = "http://localhost:3000"; 
+import { apiFetch } from "./apiClient";
 
-export async function getAllUsers() {
-  const res = await fetch(`${API_URL}/users`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch users");
-  }
-
-  return await res.json();
+export async function getUsersLimit(limit = 10, token) {
+  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 10));
+  return apiFetch(`/users/limit/${safeLimit}`, { token });
 }
-export async function getUserById(userId) {
-  const res = await fetch(`${API_URL}/users/${userId}`);
-  if (!res.ok) throw new Error("Failed to fetch user details");
-  return await res.json();
+
+export async function getUserById(id, token) {
+  return apiFetch(`/user/${id}`, { token });
 }
+
 
 export async function getUsersTemp() {
   const userIds = [1, 2, 3];

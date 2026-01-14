@@ -1,134 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ArtistFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
-import { getUsersTemp } from "../../services/UserService";
+import { useAuth } from "../../context/AuthContext";
+import { getUsersLimit } from "../../services/UserService";
 
 export default function ArtistFinderPage() {
+  const { token } = useAuth();
+
   const [artists, setArtists] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({
-    city: "",
-    instrument: "",
-    genre: "",
-    band: "",
-  });
-  const [loading, setLoading] = useState(true);
-  
   const [cities, setCities] = useState([]);
-  const [instruments, setInstruments] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [bands, setBands] = useState([]);
+
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ city: "" });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadArtists() {
+    async function load() {
       try {
-        const data = await getUsersTemp();
+        setLoading(true);
+        setError("");
 
-        // normalize fields so UI never crashes on undefined
-        const safeArtists = (data ?? [])
-          .filter(Boolean)
-          .map((artist) => ({
-            ...artist,
-            city: artist?.city ?? "",
-            username: artist?.username ?? "",
-            userName: artist?.userName ?? artist?.username ?? "",
-            firstName: artist?.firstName ?? "",
-            lastName: artist?.lastName ?? "",
-            description: artist?.description ?? artist?.bio ?? "",
-            // instruments might be string or array depending on future backend
-            instruments: artist?.instruments ?? artist?.instrument ?? "",
-            band: artist?.bandName ?? artist?.band ?? "",
-          }));
+        const data = await getUsersLimit(20, token); // max 20 from backend
+        setArtists(data);
 
-        setArtists(safeArtists);
-
-        const uniqueCities = [
-          ...new Set(
-            safeArtists
-              .map((a) => (a.city ?? "").toString().trim())
-              .filter((c) => c.length > 0)
-          ),
-        ];
-        console.log("Unique Cities:", uniqueCities);
-
-        const uniqueInstruments = [
-          ...new Set(
-            safeArtists
-              .map((a) => (a.instruments ?? "").toString().trim())
-              .filter((i) => i.length > 0)
-          ),
-        ];
-        console.log("Unique Instruments:", uniqueInstruments);
-
-        const uniqueGenres = [
-          ...new Set(
-            safeArtists
-              .map((a) => (a.genre ?? "").toString().trim())
-              .filter((g) => g.length > 0)
-          ),
-        ];
-
-        const uniqueBands = [
-          ...new Set(
-            safeArtists
-              .map((a) => (a.band ?? "").toString().trim())
-              .filter((b) => b.length > 0)
-          ),
-        ];
-
+        const uniqueCities = [...new Set(data.map(u => u.city).filter(Boolean))].sort();
         setCities(uniqueCities);
-        setInstruments(uniqueInstruments);
-        setGenres(uniqueGenres);
-        setBands(uniqueBands);
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        setError(e.message || "Failed to load artists");
       } finally {
         setLoading(false);
       }
     }
 
-    loadArtists();
-  }, []);
+    load();
+  }, [token]);
 
-  const lower = (v) => (v ?? "").toString().toLowerCase();
+  const filteredArtists = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return artists.filter((a) => {
+      const name = (a.username || a.userName || "").toLowerCase();
+      const cityOk = !filters.city || a.city === filters.city;
+      const searchOk = !q || name.includes(q);
+      return cityOk && searchOk;
+    });
+  }, [artists, search, filters.city]);
 
-  const filteredArtists = artists.filter((artist) => {
-  const nameMatch = lower(artist.userName || artist.username).includes(lower(search));
-
-  const cityMatch =
-    !filters.city || (artist.city ?? "") === filters.city;
-
-  const instrumentMatch =
-    !filters.instrument ||
-    lower(
-      Array.isArray(artist.instruments)
-        ? artist.instruments.join(" ")
-        : artist.instruments
-    ).includes(lower(filters.instrument));
-
-  const genreMatch =
-    !filters.genre ||
-    lower(
-      Array.isArray(artist.genres)
-        ? artist.genres.join(" ")
-        : artist.genre
-    ).includes(lower(filters.genre));
-
-  const bandMatch =
-    !filters.band ||
-    lower(artist.band).includes(lower(filters.band));
-
-  return nameMatch && cityMatch && instrumentMatch && genreMatch && bandMatch;
-});
-
-  if (loading) {
-    return <p style={{ padding: "40px" }}>Loading artists...</p>;
-  }
+  if (loading) return <p style={{ padding: 40 }}>Loading artists...</p>;
+  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
 
   return (
     <div className="artist-finder-page">
-      {/* SEARCH */}
       <div className="artist-search">
         <input
           type="text"
@@ -139,78 +63,32 @@ export default function ArtistFinderPage() {
       </div>
 
       <div className="artist-finder-layout">
-        {/* FILTERS */}
         <aside className="artist-filters">
           <label>City</label>
           <select
             value={filters.city}
-            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+            onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))}
           >
             <option value="">All</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-
-          <label>Instrument(s)</label>
-          <select value={filters.instrument} onChange={(e) => setFilters({ ...filters, instrument: e.target.value })}>
-            <option value="">All</option>
-            {instruments.map((inst) => (
-              <option key={inst} value={inst}>
-                {inst}
-              </option>
-            ))}
-          </select>
-
-          <label>Genre(s)</label>
-          <select value={filters.genre} onChange={(e) => setFilters({ ...filters, genre: e.target.value })}>
-            <option value="">All</option>
-            {genres.map((genre) => (
-              <option key={genre} value={genre}>
-                {genre}
-              </option>
-            ))}
-          </select>
-
-          <label>Band</label>
-          <select value={filters.band} onChange={(e) => setFilters({ ...filters, band: e.target.value })}>
-            <option value="">All</option>
-            {bands.map((band) => (
-              <option key={band} value={band}>
-                {band}
-              </option>
+            {cities.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </aside>
 
-        {/* RESULTS */}
         <div className="artist-grid">
-          {filteredArtists.map((artist) => {
-            const username = artist.userName || artist.username || "Unknown";
-            const fullName = [artist.firstName, artist.lastName].filter(Boolean).join(" ");
-
-            const instruments = Array.isArray(artist.instruments)
-              ? artist.instruments.filter(Boolean).join(", ")
-              : (artist.instruments ?? "").toString();
-
-            return (
-              <Link to={`/artist/${artist.id}`} key={artist.id} className="artist-card">
-                <img className="artist-avatar" src={placeholder} alt={username} />
-
-                <div className="artist-info">
-                  <h4 className="artist-username">{username}</h4>
-
-                  {fullName && <p className="artist-line">{fullName}</p>}
-                  {artist.description && <p className="artist-line">{artist.description}</p>}
-                  {instruments && <p className="artist-line">{instruments}</p>}
-                  {artist.city && <p className="artist-line">{artist.city}</p>}
-                  {artist.band && <p className="artist-line">{artist.band}</p>}
-                </div>
-              </Link>
-            );
-          })}
+          {filteredArtists.map((artist) => (
+            <Link
+              key={artist.id}
+              to={`/artist/${artist.id}`}
+              className="artist-card"
+            >
+              <img src={placeholder} alt={artist.username || artist.userName} />
+              <h4>{artist.username || artist.userName}</h4>
+              <p>{artist.first_name || artist.firstName} {artist.last_name || artist.lastName}</p>
+              <p>{artist.city}</p>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
