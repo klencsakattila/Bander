@@ -7,7 +7,7 @@ import { getBandById } from "../../services/BandService";
 
 export default function BandProfilePage() {
   const { id } = useParams();
-
+  
   const [band, setBand] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

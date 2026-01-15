@@ -1,7 +1,9 @@
 const API_URL = "http://localhost:3000";
 
 export async function apiFetch(path, { token, method = "GET", body } = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
+  const url = `${API_URL}${path}`;
+
+  const res = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -11,9 +13,11 @@ export async function apiFetch(path, { token, method = "GET", body } = {}) {
   });
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => "");
-    throw new Error(msg || `Request failed: ${res.status}`);
+    const text = await res.text().catch(() => "");
+    // ✅ this will tell you exactly what failed
+    throw new Error(`[${method}] ${url} -> ${res.status} ${res.statusText}\n${text}`);
   }
 
+  if (res.status === 204) return null;
   return res.json();
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./HomePage.css";
 import placeholder from "../assets/images/default-avatar.png";
+import placeholderEvent from "../assets/images/event-badge.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,37 +20,30 @@ export default function HomePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        setError("");
+  async function load() {
+    try {
+      setLoading(true);
+      setError("");
 
-        if (!isAuth) {
-          // show demo if not logged in (optional)
-          setArtists([]);
-          setBands([]);
-          setPosts([]);
-          return;
-        }
-
-        const [usersData, bandsData, postsData] = await Promise.all([
-          getUsersLimit(6, token),
-          getAllBands(token),
-          getLatestBandPosts(3, token),
-        ]);
-
-        setArtists(usersData);
-        setBands(bandsData);
-        setPosts(postsData);
-      } catch (e) {
-        setError(e.message || "Failed to load homepage data");
-      } finally {
-        setLoading(false);
-      }
+      const [usersData, bandsData, postsData] = await Promise.all([
+        getUsersLimit(6, token),      // token opcionális
+        getAllBands(token),           // token opcionális
+        getLatestBandPosts(3, token), // token opcionális
+        
+      ]);
+      setArtists(usersData || []);
+      setBands(bandsData || []);
+      setPosts(postsData || []);
+    } catch (e) {
+      setError(e.message || "Failed to load homepage data");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    load();
-  }, [token, isAuth]);
+  load();
+  }, [token]); // elég a token változását figyelni
+
 
   if (loading) return <p style={{ padding: 40 }}>Loading homepage...</p>;
   if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
@@ -70,14 +64,15 @@ export default function HomePage() {
         <h2>New Artists</h2>
         <div className="artists-grid">
           {artists.map((a) => (
-            <ArtistCard
-              key={a.id}
-              id={a.id}
-              image={placeholder}
-              username={a.username || a.userName}
-              description={`${a.first_name || a.firstName || ""} ${a.last_name || a.lastName || ""}`.trim() || "Artist"}
-            />
-          ))}
+            <Link key={a.id} to={`/artist/${a.id}`} className="artist-link-wrapper">
+              <ArtistCard
+                id={a.id}
+                image={placeholder}
+                username={a.username || a.userName}
+                description={`${a.first_name || a.firstName || ""} ${a.last_name || a.lastName || ""}`.trim() || "Artist"}
+              />
+            </Link>
+        ))}
         </div>
       </section>
 
@@ -89,8 +84,8 @@ export default function HomePage() {
             {bands.slice(0, 6).map((band) => (
               <Link key={band.id} to={`/band/${band.id}`} className="band-link">
                 <div className="band-item">
-                  <h4>{band.bandName}</h4>
-                  <p>Location: {band.bandLocation}</p>
+                  <h4>{band.name}</h4>
+                  <p>Location: {band.city}</p>
                 </div>
               </Link>
             ))}
@@ -108,8 +103,9 @@ export default function HomePage() {
         <div className="events-grid">
           {posts.map((p) => (
             <div key={p.id} className="event-card">
-              <h4>{p.TypeOfPost}</h4>
-              <p>{p.PostMessage}</p>
+              <img src={placeholderEvent} alt="Event" className="event-image" />
+              <h4>{p.post_type}</h4>
+              <p>{p.post_message}</p>
               <p className="muted">{p.Time}</p>
               <Link to={`/band/${p.BandId}`} className="artist-link">See more…</Link>
             </div>
@@ -117,13 +113,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-cta">
-        <h2>For all features</h2>
-        <div className="cta-actions">
-          <Link to="/login" className="nav-btn nav-btn-filled">Log in</Link>
-          <Link to="/signup" className="nav-btn nav-btn-outline">Sign up</Link>
-        </div>
-      </section>
+      {!isAuth && (
+        <section className="homepage-cta">
+          <h2>For all features</h2>
+          <div className="cta-actions">
+            <Link to="/login" className="nav-btn nav-btn-filled">Log in</Link>
+            <Link to="/signup" className="nav-btn nav-btn-outline">Sign up</Link>
+          </div>
+        </section>
+      )}
+
     </div>
   );
 }

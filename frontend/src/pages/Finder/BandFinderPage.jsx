@@ -18,31 +18,53 @@ export default function BandFinderPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
         setLoading(true);
         setError("");
 
         const data = await getAllBands(token);
-        setBands(data);
+        const list = Array.isArray(data) ? data : [];
 
-        const uniqueCities = [...new Set(data.map(b => b.bandLocation).filter(Boolean))].sort();
+        if (cancelled) return;
+
+        setBands(list);
+
+        const uniqueCities = [
+          ...new Set(
+            list
+              .map((b) => b.bandLocation ?? b.city ?? b.location)
+              .filter(Boolean)
+              .map(String)
+          ),
+        ].sort((a, b) => a.localeCompare(b));
+
         setCities(uniqueCities);
       } catch (e) {
-        setError(e.message || "Failed to load bands");
+        if (!cancelled) setError(e.message || "Failed to load bands");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const filteredBands = useMemo(() => {
     const q = search.trim().toLowerCase();
+
     return bands.filter((b) => {
-      const nameOk = !q || (b.bandName || "").toLowerCase().includes(q);
-      const cityOk = !filters.city || b.bandLocation === filters.city;
+      const name = (b.bandName ?? b.name ?? "").toLowerCase();
+      const loc = b.city;
+
+      const nameOk = !q || name.includes(q);
+      const cityOk = !filters.city || String(loc) === filters.city;
+
       return nameOk && cityOk;
     });
   }, [bands, search, filters.city]);
@@ -70,19 +92,26 @@ export default function BandFinderPage() {
           >
             <option value="">All</option>
             {cities.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </aside>
 
         <div className="band-grid">
-          {filteredBands.map((band) => (
-            <Link key={band.id} to={`/band/${band.id}`} className="band-card">
-              <img src={placeholder} alt={band.bandName} />
-              <h4>{band.bandName}</h4>
-              <p className="muted">Location: {band.bandLocation}</p>
-            </Link>
-          ))}
+          {filteredBands.map((band) => {
+            const name = band.bandName ?? band.name ?? "Band";
+            const loc = band.bandLocation ?? band.city ?? band.location ?? "";
+
+            return (
+              <Link key={band.id} to={`/band/${band.id}`} className="band-card">
+                <img src={placeholder} alt={name} />
+                <h4>{name}</h4>
+                <p className="muted">Location: {loc}</p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
