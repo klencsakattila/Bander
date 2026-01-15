@@ -54,14 +54,14 @@ export async function signIn(req: any, res: any) {
 };
 
 export async function signUp(req: any, res: any) {
-    const { email, password, userName } = req.body || {};
+    const { email, password } = req.body || {};
 
     // DEBUG: inspect incoming request for content-type and body keys (remove in production)
     console.log('signUp - method:', req.method, 'path:', req.path);
     console.log('signUp - content-type:', req.headers && (req.headers['content-type'] || req.headers['Content-Type']));
     console.log('signUp - body type:', typeof req.body, 'body keys:', Object.keys(req.body || {}));
 
-    if(!(email && password && userName)){
+    if(!(email && password /*&& userName*/)){
         res.status(400).send("Incorrect data entered or request body is missing.");
         return;
     };
@@ -70,8 +70,8 @@ export async function signUp(req: any, res: any) {
 
     try{
         const [result] = await connection.query(
-            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-            [userName, email, password]
+            'INSERT INTO users (email, password_hash) VALUES (?, ?)',
+            [/*userName,*/ email, password]
         ) as Array<any>;
 
         const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
