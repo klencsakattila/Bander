@@ -1,4 +1,4 @@
--- Active: 1741960987478@@127.0.0.1@3306@bander
+-- Active: 1767093792536@@localhost@3306@bander
 -- ======================================================
 -- Database
 -- ======================================================
@@ -23,6 +23,8 @@ CREATE TABLE users (
     birth_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE users MODIFY username VARCHAR(50) NULL;
 
 -- ======================================================
 -- Band

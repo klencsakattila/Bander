@@ -55,23 +55,21 @@ export async function signIn(req: any, res: any) {
 
 export async function signUp(req: any, res: any) {
     const { email, password } = req.body || {};
-
     // DEBUG: inspect incoming request for content-type and body keys (remove in production)
     console.log('signUp - method:', req.method, 'path:', req.path);
     console.log('signUp - content-type:', req.headers && (req.headers['content-type'] || req.headers['Content-Type']));
     console.log('signUp - body type:', typeof req.body, 'body keys:', Object.keys(req.body || {}));
 
-    if(!(email && password /*&& userName*/)){
+    if(!(email && password)){
         res.status(400).send("Incorrect data entered or request body is missing.");
         return;
     };
 
     const connection = await mysql.createConnection(config.database);
-
     try{
         const [result] = await connection.query(
             'INSERT INTO users (email, password_hash) VALUES (?, ?)',
-            [/*userName,*/ email, password]
+            [email, password]
         ) as Array<any>;
 
         const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
@@ -92,7 +90,7 @@ export async function signUp(req: any, res: any) {
     catch(err: any){
         console.log(err);
         if(err && err.code === 'ER_DUP_ENTRY'){
-            res.status(409).send("User with this email or username already exists.");
+            res.status(409).send("User with this email already exists.");
             return;
         }
         res.status(500).send('Error creating user.');
