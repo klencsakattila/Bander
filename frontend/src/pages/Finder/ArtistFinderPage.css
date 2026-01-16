@@ -31,6 +31,7 @@
 .artist-finder-layout {
   display: flex;
   gap: 40px;
+  align-items: flex-start;
 }
 
 /* ===============================
@@ -59,12 +60,14 @@
 
 /* ===============================
    GRID
+   Desktop: 4 cards in a row
 ================================ */
 .artist-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* ✅ fix 4 columns */
   gap: 25px;
+  min-width: 0; /* ✅ prevents overflow in flex layout */
 }
 
 /* ===============================
@@ -125,23 +128,57 @@
 /* ===============================
    RESPONSIVE
 ================================ */
-@media (max-width: 900px) {
+
+/* Tablet: 2 cards / row */
+@media (max-width: 1100px) {
+  .artist-finder-page {
+    padding: 30px 30px;
+  }
+
+  .artist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* ✅ 2 columns */
+  }
+}
+
+/* Mobile: filters on top, 1 card / row */
+@media (max-width: 700px) {
   .artist-finder-page {
     padding: 20px;
   }
 
-  .artist-finder-layout {
-    flex-direction: column;
-  }
-
-  .artist-filters {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
   .artist-search input {
     width: 100%;
+  }
+
+  .artist-finder-layout {
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* filters become a grid so they don't look broken */
+  .artist-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* ✅ 2 per row */
+    gap: 10px 12px;
+  }
+
+  .artist-filters label {
+    grid-column: span 2; /* label above the select */
+  }
+
+  .artist-grid {
+    grid-template-columns: 1fr; /* ✅ 1 column */
+  }
+}
+
+/* Very small phones: filters 1 per row */
+@media (max-width: 420px) {
+  .artist-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .artist-filters label {
+    grid-column: span 1;
   }
 }

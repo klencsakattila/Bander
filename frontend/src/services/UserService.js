@@ -6,7 +6,7 @@ export async function getUsersLimit(limit = 10, token) {
 }
 
 export async function getUserById(id, token) {
-  return apiFetch(`/user/${id}`, { token });
+  return apiFetch(`/users/${id}`, { token });
 }
 
 

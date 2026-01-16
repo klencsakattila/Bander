@@ -1,17 +1,10 @@
-import { Link } from "react-router-dom";
-
-export default function NewArtistCard({ image, username, description, id }) {
+export default function NewArtistCard({ image, username, description }) {
   return (
     <div className="artist-card">
-      <img className="artist-image" src={image} alt={username} />
-
+      <img src={image} alt={username} />
       <div className="artist-info">
-        <h3 className="artist-name">{username}</h3>
-        <p className="artist-description">{description}</p>
-
-        <Link className="artist-link" to={`/artist/${id}`}>
-          See more…
-        </Link>
+        <h3>{username}</h3>
+        <p>{description}</p>
       </div>
     </div>
   );

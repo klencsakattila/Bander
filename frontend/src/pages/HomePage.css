@@ -234,3 +234,9 @@
     padding: 30px 20px;
   }
 }
+
+.artist-link-wrapper {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
