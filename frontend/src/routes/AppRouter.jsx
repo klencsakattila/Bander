@@ -1,3 +1,4 @@
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -12,6 +13,7 @@ import BandProfilePage from "../pages/Profile/BandProfilePage";
 import EditProfilePage from "../pages/Profile/EditProfilePage";
 import MessagesPage from "../pages/Messages/MessagePage";
 import EventFinderPage from "../pages/Finder/EventFinderPage";
+import AboutPage from "../pages/AboutPAge";
 
 export default function AppRouter() {
   return (
@@ -20,6 +22,7 @@ export default function AppRouter() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/about" element={<AboutPage />} />
 
       {/* Protected */}
       <Route element={<ProtectedRoute />}>

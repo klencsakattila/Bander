@@ -26,9 +26,9 @@ export default function HomePage() {
       setError("");
 
       const [usersData, bandsData, postsData] = await Promise.all([
-        getUsersLimit(6, token),      // token opcionális
+        getUsersLimit(8, token),      // token opcionális
         getAllBands(token),           // token opcionális
-        getLatestBandPosts(3, token), // token opcionális
+        getLatestBandPosts(7, token), // token opcionális
         
       ]);
       setArtists(usersData || []);
@@ -104,6 +104,7 @@ export default function HomePage() {
           {posts.map((p) => (
             <div key={p.id} className="event-card">
               <img src={placeholderEvent} alt="Event" className="event-image" />
+              <h3>{p.name}</h3>
               <h4>{p.post_type}</h4>
               <p>{p.post_message}</p>
               <p className="muted">{p.Time}</p>
