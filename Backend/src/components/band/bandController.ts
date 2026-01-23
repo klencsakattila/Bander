@@ -14,10 +14,16 @@ export async function getBandsLimit(req: Request, res: Response) {
             [limit]
         ) as Array<any>;
 
+        await connection.end();
         res.status(200).send(result);
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
         res.status(500).send('Error fetching bands.');
     }
 }
@@ -34,10 +40,16 @@ export async function getLatestBandPosts(req: Request, res: Response) {
             [limit]
         ) as Array<any>;
 
+        await connection.end();
         res.status(200).send(result);
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
         res.status(500).send('Error fetching band posts.');
     }
 }
@@ -52,20 +64,432 @@ export async function getBandById(req: Request, res: Response) {
     const connection = await mysql.createConnection(config.database);
 
     try{
-        const [result] = await connection.query(
+        // Get band basic info
+        const [bandResult] = await connection.query(
             'SELECT * FROM bands WHERE id = ?',
             [id]
         ) as Array<any>;
 
-        if(result.length > 0){
-            res.status(200).send(result[0]);
+        if(bandResult.length === 0){
+            res.status(404).send("No band found with the given id.");
             return;
         }
 
-        res.status(404).send("No band found with the given id.");
+        const band = bandResult[0];
+
+        // Get band members with their instruments
+        const [membersResult] = await connection.query(
+            `SELECT DISTINCT
+                u.id,
+                u.username,
+                GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ') as instruments
+            FROM band_members bm
+            INNER JOIN users u ON bm.user_id = u.id
+            LEFT JOIN user_instruments ui ON u.id = ui.user_id
+            LEFT JOIN instruments i ON ui.instrument_id = i.id
+            WHERE bm.band_id = ?
+            GROUP BY u.id, u.username`,
+            [id]
+        ) as Array<any>;
+
+        // Get band styles
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM band_styles bs
+            INNER JOIN musical_styles ms ON bs.style_id = ms.id
+            WHERE bs.band_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        // Format members: convert instruments string to array, or empty array if null
+        const members = membersResult.map((member: any) => ({
+            id: member.id,
+            username: member.username,
+            instruments: member.instruments ? member.instruments.split(', ') : []
+        }));
+
+        // Format styles: extract just the names
+        const styles = stylesResult.map((style: any) => style.name);
+
+        // Combine all data
+        const result = {
+            ...band,
+            members: members,
+            styles: styles
+        };
+
+        await connection.end();
+        res.status(200).send(result);
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
         res.status(500).send('Error fetching band.');
+    }
+}
+
+// Create new band
+export async function createBand(req: Request, res: Response) {
+    const { name, city } = req.body || {};
+
+    if(!name){
+        res.status(400).send("Band name is required.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [result] = await connection.query(
+            'INSERT INTO bands (name, city) VALUES (?, ?)',
+            [name, city || null]
+        ) as Array<any>;
+
+        const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
+
+        if(!insertId){
+            res.status(500).send("Unable to create band.");
+            await connection.end();
+            return;
+        }
+
+        // Get the created band with all details
+        const [bandResult] = await connection.query(
+            'SELECT * FROM bands WHERE id = ?',
+            [insertId]
+        ) as Array<any>;
+
+        const band = bandResult[0];
+
+        // Get band members (empty initially)
+        const [membersResult] = await connection.query(
+            `SELECT DISTINCT
+                u.id,
+                u.username,
+                GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ') as instruments
+            FROM band_members bm
+            INNER JOIN users u ON bm.user_id = u.id
+            LEFT JOIN user_instruments ui ON u.id = ui.user_id
+            LEFT JOIN instruments i ON ui.instrument_id = i.id
+            WHERE bm.band_id = ?
+            GROUP BY u.id, u.username`,
+            [insertId]
+        ) as Array<any>;
+
+        // Get band styles (empty initially)
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM band_styles bs
+            INNER JOIN musical_styles ms ON bs.style_id = ms.id
+            WHERE bs.band_id = ?`,
+            [insertId]
+        ) as Array<any>;
+
+        const members = membersResult.map((member: any) => ({
+            id: member.id,
+            username: member.username,
+            instruments: member.instruments ? member.instruments.split(', ') : []
+        }));
+
+        const styles = stylesResult.map((style: any) => style.name);
+
+        const result_band = {
+            ...band,
+            members: members,
+            styles: styles
+        };
+
+        await connection.end();
+        res.status(201).send(result_band);
+    }
+    catch(err: any){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        if(err && err.code === 'ER_DUP_ENTRY'){
+            res.status(409).send("Band with this name already exists.");
+            return;
+        }
+        res.status(500).send('Error creating band.');
+    }
+}
+
+// Update band details
+export async function updateBand(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+    
+    if(isNaN(id)){
+        res.status(400).send("Invalid band id.");
+        return;
+    }
+
+    const { name, city } = req.body || {};
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        // Check if band exists
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(bandCheck.length === 0){
+            res.status(404).send("Band not found.");
+            await connection.end();
+            return;
+        }
+
+        // Build update query dynamically
+        const updateFields: string[] = [];
+        const updateValues: any[] = [];
+
+        if(name !== undefined) {
+            updateFields.push('name = ?');
+            updateValues.push(name);
+        }
+        if(city !== undefined) {
+            updateFields.push('city = ?');
+            updateValues.push(city);
+        }
+
+        if(updateFields.length === 0){
+            res.status(400).send("No fields to update.");
+            await connection.end();
+            return;
+        }
+
+        updateValues.push(id);
+
+        const updateQuery = `UPDATE bands SET ${updateFields.join(', ')} WHERE id = ?`;
+        
+        await connection.query(updateQuery, updateValues);
+
+        // Get updated band with all details
+        const [bandResult] = await connection.query(
+            'SELECT * FROM bands WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        const band = bandResult[0];
+
+        // Get band members
+        const [membersResult] = await connection.query(
+            `SELECT DISTINCT
+                u.id,
+                u.username,
+                GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ') as instruments
+            FROM band_members bm
+            INNER JOIN users u ON bm.user_id = u.id
+            LEFT JOIN user_instruments ui ON u.id = ui.user_id
+            LEFT JOIN instruments i ON ui.instrument_id = i.id
+            WHERE bm.band_id = ?
+            GROUP BY u.id, u.username`,
+            [id]
+        ) as Array<any>;
+
+        // Get band styles
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM band_styles bs
+            INNER JOIN musical_styles ms ON bs.style_id = ms.id
+            WHERE bs.band_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        const members = membersResult.map((member: any) => ({
+            id: member.id,
+            username: member.username,
+            instruments: member.instruments ? member.instruments.split(', ') : []
+        }));
+
+        const styles = stylesResult.map((style: any) => style.name);
+
+        const result = {
+            ...band,
+            members: members,
+            styles: styles
+        };
+
+        await connection.end();
+        res.status(200).send(result);
+    }
+    catch(err: any){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        if(err && err.code === 'ER_DUP_ENTRY'){
+            res.status(409).send("Band with this name already exists.");
+            return;
+        }
+        res.status(500).send('Error updating band.');
+    }
+}
+
+// Add new member to band
+export async function addBandMember(req: Request, res: Response) {
+    const { band_id, user_id, role } = req.body || {};
+
+    if(!band_id || !user_id){
+        res.status(400).send("Band ID and User ID are required.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        // Check if band exists
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [band_id]
+        ) as Array<any>;
+
+        if(bandCheck.length === 0){
+            res.status(404).send("Band not found.");
+            await connection.end();
+            return;
+        }
+
+        // Check if user exists
+        const [userCheck] = await connection.query(
+            'SELECT id FROM users WHERE id = ?',
+            [user_id]
+        ) as Array<any>;
+
+        if(userCheck.length === 0){
+            res.status(404).send("User not found.");
+            await connection.end();
+            return;
+        }
+
+        // Check if member already exists
+        const [memberCheck] = await connection.query(
+            'SELECT band_id, user_id FROM band_members WHERE band_id = ? AND user_id = ?',
+            [band_id, user_id]
+        ) as Array<any>;
+
+        if(memberCheck.length > 0){
+            res.status(409).send("User is already a member of this band.");
+            await connection.end();
+            return;
+        }
+
+        // Add member
+        await connection.query(
+            'INSERT INTO band_members (band_id, user_id, role) VALUES (?, ?, ?)',
+            [band_id, user_id, role || null]
+        );
+
+        // Get updated band with all details
+        const [bandResult] = await connection.query(
+            'SELECT * FROM bands WHERE id = ?',
+            [band_id]
+        ) as Array<any>;
+
+        const band = bandResult[0];
+
+        // Get band members
+        const [membersResult] = await connection.query(
+            `SELECT DISTINCT
+                u.id,
+                u.username,
+                GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ') as instruments
+            FROM band_members bm
+            INNER JOIN users u ON bm.user_id = u.id
+            LEFT JOIN user_instruments ui ON u.id = ui.user_id
+            LEFT JOIN instruments i ON ui.instrument_id = i.id
+            WHERE bm.band_id = ?
+            GROUP BY u.id, u.username`,
+            [band_id]
+        ) as Array<any>;
+
+        // Get band styles
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM band_styles bs
+            INNER JOIN musical_styles ms ON bs.style_id = ms.id
+            WHERE bs.band_id = ?`,
+            [band_id]
+        ) as Array<any>;
+
+        const members = membersResult.map((member: any) => ({
+            id: member.id,
+            username: member.username,
+            instruments: member.instruments ? member.instruments.split(', ') : []
+        }));
+
+        const styles = stylesResult.map((style: any) => style.name);
+
+        const result = {
+            ...band,
+            members: members,
+            styles: styles
+        };
+
+        await connection.end();
+        res.status(201).send(result);
+    }
+    catch(err: any){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error adding band member.');
+    }
+}
+
+// Delete band
+export async function deleteBand(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+    
+    if(isNaN(id)){
+        res.status(400).send("Invalid band id.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        // Check if band exists
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(bandCheck.length === 0){
+            res.status(404).send("Band not found.");
+            await connection.end();
+            return;
+        }
+
+        // Delete band (CASCADE will handle related records)
+        await connection.query(
+            'DELETE FROM bands WHERE id = ?',
+            [id]
+        );
+
+        await connection.end();
+        res.status(200).send({ message: "Band deleted successfully." });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error deleting band.');
     }
 }

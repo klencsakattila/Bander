@@ -1,4 +1,4 @@
--- Active: 1767093792536@@localhost@3306@bander
+-- Active: 1769172688017@@localhost@3306@bander
 -- ======================================================
 -- Database
 -- ======================================================
@@ -223,3 +223,37 @@ INSERT INTO messages (thread_id,sender_id,message) VALUES
 (2,3,'Hi, anyone playing this weekend?');
 
 -- End demo seed data
+
+-- ======================================================
+-- Clear Database Script
+-- Run this before seeding to avoid conflicts
+-- ======================================================
+USE bander;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE messages;
+TRUNCATE TABLE thread_users;
+TRUNCATE TABLE threads;
+TRUNCATE TABLE posts;
+TRUNCATE TABLE band_styles;
+TRUNCATE TABLE user_styles;
+TRUNCATE TABLE user_instruments;
+TRUNCATE TABLE band_members;
+TRUNCATE TABLE instruments;
+TRUNCATE TABLE musical_styles;
+TRUNCATE TABLE bands;
+TRUNCATE TABLE users;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Reset AUTO_INCREMENT counters
+ALTER TABLE messages AUTO_INCREMENT = 1;
+ALTER TABLE threads AUTO_INCREMENT = 1;
+ALTER TABLE posts AUTO_INCREMENT = 1;
+ALTER TABLE instruments AUTO_INCREMENT = 1;
+ALTER TABLE musical_styles AUTO_INCREMENT = 1;
+ALTER TABLE bands AUTO_INCREMENT = 1;
+ALTER TABLE users AUTO_INCREMENT = 1;
+
+-- End clear database script

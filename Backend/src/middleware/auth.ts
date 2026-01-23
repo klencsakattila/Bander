@@ -15,12 +15,25 @@ export function verifyToken(req: any, res: any, next: any) {
             return;
         };
 
-        const decodedToken = jwt.verify(token, config.jwtSecret);
+        const decodedToken = jwt.verify(token, config.jwtSecret) as any;
+        
+        // Mindig check-elje hogy a user-nek minden adata mevan e adva
+        if(!decodedToken || !decodedToken.id){
+            res.status(403).send("Invalid token: missing user data.");
+            return;
+        }
+
+        if(typeof decodedToken.id !== 'number' || isNaN(decodedToken.id)){
+            res.status(403).send("Invalid token: invalid user ID.");
+            return;
+        }
+
         req.user = decodedToken;
 
         return next();
     }
     catch(err){
         console.log(err);
+        res.status(403).send("Invalid or expired token.");
     }
 };

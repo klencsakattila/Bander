@@ -7,21 +7,16 @@ export default function root(_req: Request, res: Response) {
     res.status(200).send("The server is running properly.");
 }
 
-function idIsNan(id: number, res: Response){
+function idIsNan(id: number, res: Response): boolean {
     if(isNaN(id)){
         res.status(400).send("Nem megfelelő formátumú azonosító.");
-        return;
-    };
+        return false;
+    }
+    return true;
 };
 
 export async function signIn(req: any, res: any) {
     const { email, password } = req.body || {};
-
-    // DEBUG: inspect incoming request for content-type and body keys (remove in production)
-    console.log('signIn - method:', req.method, 'path:', req.path);
-    console.log('signIn - content-type:', req.headers && (req.headers['content-type'] || req.headers['Content-Type']));
-    console.log('signIn - body type:', typeof req.body, 'body keys:', Object.keys(req.body || {}));
-    console.log('signIn - password present:', !!(req.body && req.body.password));
 
     if(!(email && password)){
         res.status(400).send("Incorrect data entered or request body is missing.");
@@ -36,12 +31,16 @@ export async function signIn(req: any, res: any) {
             [email, password]
         ) as Array<any>;
 
-        if(!result[0].id){
-            return res.status(401).send("Incorrect email or password.");
+        await connection.end();
+
+        if(!result || result.length === 0 || !result[0] || !result[0].id){
+            res.status(401).send("Incorrect email or password.");
+            return;
         };
 
         if(!config.jwtSecret){
-            return res.status(500).send("Error with the secret key.");
+            res.status(500).send("Error with the secret key.");
+            return;
         };
 
         const token = jwt.sign({id: result[0].id}, config.jwtSecret, {expiresIn: "2h"});
@@ -50,6 +49,14 @@ export async function signIn(req: any, res: any) {
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        if(!res.headersSent){
+            res.status(500).send('Error during sign in.');
+        }
     }
 };
 
@@ -72,6 +79,8 @@ export async function signUp(req: any, res: any) {
             [email, password]
         ) as Array<any>;
 
+        await connection.end();
+
         const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
 
         if(!insertId){
@@ -80,7 +89,8 @@ export async function signUp(req: any, res: any) {
         };
 
         if(!config.jwtSecret){
-            return res.status(500).send("Error with the secret key.");
+            res.status(500).send("Error with the secret key.");
+            return;
         };
 
         const token = jwt.sign({id: insertId}, config.jwtSecret, {expiresIn: "2h"});
@@ -89,6 +99,11 @@ export async function signUp(req: any, res: any) {
     }
     catch(err: any){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
         if(err && err.code === 'ER_DUP_ENTRY'){
             res.status(409).send("User with this email already exists.");
             return;
@@ -99,25 +114,70 @@ export async function signUp(req: any, res: any) {
 
 export async function getUserById(req: Request, res: Response) {
     const id: number = parseInt(req.params.id);
-    idIsNan(id, res);
+    
+    if(!idIsNan(id, res)){
+        return;
+    }
 
     const connection = await mysql.createConnection(config.database);
 
     try{
-        const [result] = await connection.query(
+        // Get user basic info
+        const [userResult] = await connection.query(
             'SELECT * FROM users WHERE id = ?',
             [id]
         ) as Array<any>;
 
-        if(result.length > 0){
-            res.status(200).send(result);
+        if(userResult.length === 0){
+            res.status(404).send("There arent any items with the given id.");
             return;
+        }
+
+        const user = userResult[0];
+
+        // Get user instruments
+        const [instrumentsResult] = await connection.query(
+            `SELECT i.id, i.name
+            FROM user_instruments ui
+            INNER JOIN instruments i ON ui.instrument_id = i.id
+            WHERE ui.user_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        // Get user styles
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM user_styles us
+            INNER JOIN musical_styles ms ON us.style_id = ms.id
+            WHERE us.user_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        // Format instruments: extract just the names
+        const instruments = instrumentsResult.map((instrument: any) => instrument.name);
+
+        // Format styles: extract just the names
+        const styles = stylesResult.map((style: any) => style.name);
+
+        // Remove password_hash and combine all data
+        const { password_hash, ...userWithoutPassword } = user;
+        const result = {
+            ...userWithoutPassword,
+            instruments: instruments,
+            styles: styles
         };
 
-        res.status(404).send("There arent any items with the given id.");
+        await connection.end();
+        res.status(200).send(result);
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error fetching user.');
     }
 };
 
@@ -128,15 +188,242 @@ export async function getUsersLimit(req: Request, res: Response) {
     const connection = await mysql.createConnection(config.database);
 
     try{
-        const [result] = await connection.query(
+        // Get users basic info
+        const [usersResult] = await connection.query(
             'SELECT id, username, email, first_name, last_name, city, birth_date, created_at FROM users ORDER BY created_at DESC LIMIT ?',
             [limit]
         ) as Array<any>;
 
-        res.status(200).send(result);
+        // Get instruments and styles for all users
+        const userIds = usersResult.map((user: any) => user.id);
+        
+        if(userIds.length > 0){
+            // Get all instruments for these users
+            const [instrumentsResult] = await connection.query(
+                `SELECT ui.user_id, i.name
+                FROM user_instruments ui
+                INNER JOIN instruments i ON ui.instrument_id = i.id
+                WHERE ui.user_id IN (${userIds.map(() => '?').join(',')})`,
+                userIds
+            ) as Array<any>;
+
+            // Get all styles for these users
+            const [stylesResult] = await connection.query(
+                `SELECT us.user_id, ms.name
+                FROM user_styles us
+                INNER JOIN musical_styles ms ON us.style_id = ms.id
+                WHERE us.user_id IN (${userIds.map(() => '?').join(',')})`,
+                userIds
+            ) as Array<any>;
+
+            // Group instruments and styles by user_id
+            const instrumentsByUser: { [key: number]: string[] } = {};
+            const stylesByUser: { [key: number]: string[] } = {};
+
+            instrumentsResult.forEach((row: any) => {
+                if(!instrumentsByUser[row.user_id]){
+                    instrumentsByUser[row.user_id] = [];
+                }
+                instrumentsByUser[row.user_id].push(row.name);
+            });
+
+            stylesResult.forEach((row: any) => {
+                if(!stylesByUser[row.user_id]){
+                    stylesByUser[row.user_id] = [];
+                }
+                stylesByUser[row.user_id].push(row.name);
+            });
+
+            // Combine data
+            const result = usersResult.map((user: any) => ({
+                ...user,
+                instruments: instrumentsByUser[user.id] || [],
+                styles: stylesByUser[user.id] || []
+            }));
+
+            await connection.end();
+            res.status(200).send(result);
+        } else {
+            await connection.end();
+            res.status(200).send([]);
+        }
     }
     catch(err){
         console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
         res.status(500).send('Error fetching users.');
+    }
+};
+
+// Update user details
+export async function updateUser(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+    
+    if(!idIsNan(id, res)){
+        return;
+    }
+
+    const { username, email, first_name, last_name, city, birth_date, password_hash } = req.body || {};
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        // Check if user exists
+        const [userCheck] = await connection.query(
+            'SELECT id FROM users WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(userCheck.length === 0){
+            res.status(404).send("User not found.");
+            await connection.end();
+            return;
+        }
+
+        // Build update query dynamically
+        const updateFields: string[] = [];
+        const updateValues: any[] = [];
+
+        if(username !== undefined) {
+            updateFields.push('username = ?');
+            updateValues.push(username);
+        }
+        if(email !== undefined) {
+            updateFields.push('email = ?');
+            updateValues.push(email);
+        }
+        if(first_name !== undefined) {
+            updateFields.push('first_name = ?');
+            updateValues.push(first_name);
+        }
+        if(last_name !== undefined) {
+            updateFields.push('last_name = ?');
+            updateValues.push(last_name);
+        }
+        if(city !== undefined) {
+            updateFields.push('city = ?');
+            updateValues.push(city);
+        }
+        if(birth_date !== undefined) {
+            updateFields.push('birth_date = ?');
+            updateValues.push(birth_date);
+        }
+        if(password_hash !== undefined) {
+            updateFields.push('password_hash = ?');
+            updateValues.push(password_hash);
+        }
+
+        if(updateFields.length === 0){
+            res.status(400).send("No fields to update.");
+            await connection.end();
+            return;
+        }
+
+        updateValues.push(id);
+
+        const updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
+        
+        await connection.query(updateQuery, updateValues);
+
+        // Get updated user with instruments and styles
+        const [userResult] = await connection.query(
+            'SELECT * FROM users WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        const user = userResult[0];
+
+        // Get user instruments
+        const [instrumentsResult] = await connection.query(
+            `SELECT i.id, i.name
+            FROM user_instruments ui
+            INNER JOIN instruments i ON ui.instrument_id = i.id
+            WHERE ui.user_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        // Get user styles
+        const [stylesResult] = await connection.query(
+            `SELECT ms.id, ms.name
+            FROM user_styles us
+            INNER JOIN musical_styles ms ON us.style_id = ms.id
+            WHERE us.user_id = ?`,
+            [id]
+        ) as Array<any>;
+
+        // Format instruments and styles
+        const instruments = instrumentsResult.map((instrument: any) => instrument.name);
+        const styles = stylesResult.map((style: any) => style.name);
+
+        // Remove password_hash and combine all data
+        const { password_hash: pwd, ...userWithoutPassword } = user;
+        const result = {
+            ...userWithoutPassword,
+            instruments: instruments,
+            styles: styles
+        };
+
+        await connection.end();
+        res.status(200).send(result);
+    }
+    catch(err: any){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        if(err && err.code === 'ER_DUP_ENTRY'){
+            res.status(409).send("Username or email already exists.");
+            return;
+        }
+        res.status(500).send('Error updating user.');
+    }
+};
+
+// Delete user
+export async function deleteUser(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+    
+    if(!idIsNan(id, res)){
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        // Check if user exists
+        const [userCheck] = await connection.query(
+            'SELECT id FROM users WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(userCheck.length === 0){
+            res.status(404).send("User not found.");
+            await connection.end();
+            return;
+        }
+
+        // Delete user (CASCADE will handle related records)
+        await connection.query(
+            'DELETE FROM users WHERE id = ?',
+            [id]
+        );
+
+        await connection.end();
+        res.status(200).send({ message: "User deleted successfully." });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error deleting user.');
     }
 };
