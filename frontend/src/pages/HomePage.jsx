@@ -28,7 +28,7 @@ export default function HomePage() {
       const [usersData, bandsData, postsData] = await Promise.all([
         getUsersLimit(8, token),      // token opcionális
         getAllBands(token),           // token opcionális
-        getLatestBandPosts(7, token), // token opcionális
+        getLatestBandPosts(4, token), // token opcionális
         
       ]);
       setArtists(usersData || []);
