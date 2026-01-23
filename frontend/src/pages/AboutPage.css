@@ -1,0 +1,47 @@
+.about-page {
+
+    display: flex;
+    justify-content: center;
+    padding: 36px 16px;
+    background: #fbf1d6; /* warm beige like screenshot */
+  }
+  
+  .about-card {
+    width: 100%;
+    max-width: 980px;
+    padding: 34px 34px 26px;
+    color: #111;
+  }
+  
+  .about-title {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 0 0 22px;
+  }
+  
+  .about-text {
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  
+  .about-text p {
+    margin: 0 0 14px;
+  }
+  
+  .about-footer {
+    margin-top: 18px;
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .about-link {
+    color: #111;
+    text-decoration: underline;
+    font-weight: 600;
+  }
+  

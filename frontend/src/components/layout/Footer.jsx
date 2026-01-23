@@ -1,5 +1,7 @@
+import React from 'react';
 import './Footer.css';
 import { FaInstagram, FaFacebook, FaYoutube, FaSpotify } from "react-icons/fa";
+import { Link } from 'react-router-dom';
 
 
 export default function Footer(){
@@ -22,15 +24,15 @@ export default function Footer(){
                     <div className="footer-links">
 
                     <div className="footer-column">
-                        <h3>Artists</h3>
+                        <Link to="/artists"><h3>Artists</h3></Link>
                     </div>
 
                     <div className="footer-column">
-                        <h3>Bands</h3>
+                        <Link to="/bands"><h3>Bands</h3></Link>
                     </div>
 
                     <div className="footer-column">
-                        <h3>Events</h3>
+                        <Link to="/about"><h3>About Us</h3></Link>
                     </div>
 
                     </div>

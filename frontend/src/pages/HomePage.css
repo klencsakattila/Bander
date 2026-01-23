@@ -1,6 +1,26 @@
-.homepage {
-  padding: 40px 80px;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
 }
+
+body {
+  display: block;      /* important: remove flex centering */
+}
+
+#root {
+  max-width: none;     /* remove Vite template constraint */
+  padding: 0;
+  margin: 0;
+}
+
+.homepage {
+  width: 100%;
+  margin: 0 auto;
+  max-width: 1200px;                 /* content doesn’t get too wide */
+  padding: clamp(16px, 3vw, 40px);   /* responsive padding */
+}
+
 
 /* --------------------------
    HERO SECTION
@@ -30,6 +50,7 @@
   color: white;
   font-weight: 600;
   text-decoration: none;
+  padding: 12px clamp(24px, 8vw, 100px);
 }
 
 .hero-btn:hover {
@@ -49,10 +70,12 @@
 }
 
 .artists-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
-  flex-wrap: wrap;
 }
+
+
 
 /* --------------------------
    BANDS
@@ -158,10 +181,12 @@
   cursor: pointer;
 }
 .events-grid {
-  display: flex;
-  gap: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 2fr));
   margin-top: 20px;
 }
+
+
 
 /* --------------------------
    CTA SECTION
