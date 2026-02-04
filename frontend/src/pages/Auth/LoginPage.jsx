@@ -3,6 +3,7 @@ import "./LoginPage.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { loginUser } from "../../services/UserService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -30,12 +31,9 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
+      const res = await loginUser({ email, password });
 
-      const res = await fetch("http://localhost:3000/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      
 
       if (!res.ok) {
         const msg = await res.text().catch(() => "");
