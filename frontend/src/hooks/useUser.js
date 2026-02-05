@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getUserById, updateUser } from "../../../services/UserService";
-import { useAuth } from "../../../context/AuthContext";
+import { getUserById, updateUser } from "../services/UserService";
+import { useAuth } from "../context/AuthContext";
 
 function normalizeUser(data) {
   if (!data) return null;
@@ -8,7 +8,7 @@ function normalizeUser(data) {
   return data;
 }
 
-export default function useEditProfileSettings() {
+export function useEditProfileSettings() {
   const { token, userId, isAuth } = useAuth();
 
   const [loading, setLoading] = useState(true);

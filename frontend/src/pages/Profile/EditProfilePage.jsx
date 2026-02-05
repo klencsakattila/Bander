@@ -1,10 +1,6 @@
-import { use, useEffect, useMemo, useState } from "react";
 import "./EditProfileSettings.css";
 import placeholder from "../../assets/images/default-avatar.png";
-import { useAuth } from "../../context/AuthContext";
-import { getUserById } from "../../services/UserService";
-import { getUserById, updateUser } from "../../services/UserService";
-import useEditProfileSettings from "../../hooks/useUser";
+import { useEditProfileSettings } from "../../hooks/useUser";
 
 export default function EditProfileSettings() {
   // IMPORTANT:

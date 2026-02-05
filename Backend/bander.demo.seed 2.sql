@@ -661,3 +661,243 @@ INSERT INTO messages (thread_id,sender_id,message,sent_at) VALUES
 (15,29,'Szia! Ráérsz ma egy gyors egyeztetésre?','2025-12-26 20:12:00'),
 (15,21,'Kezdjünk 2 számmal bemelegítésnek.','2025-12-26 23:12:00'),
 (15,29,'Oké, várom!','2025-12-27 02:04:00');
+
+-- ======================================================
+-- Add famous Rock / Metal bands (NO messages/threads)
+-- Works even if IDs change, because it maps by NAME.
+-- ======================================================
+
+-- 1) Insert bands (cities optional)
+INSERT INTO bands (name, city) VALUES
+('Metallica', 'Los Angeles'),
+('Iron Maiden', 'London'),
+('Black Sabbath', 'Birmingham'),
+('Judas Priest', 'Birmingham'),
+('Megadeth', 'Los Angeles'),
+('Slayer', 'Huntington Park'),
+('Pantera', 'Arlington'),
+('Slipknot', 'Des Moines'),
+('AC/DC', 'Sydney'),
+('Led Zeppelin', 'London'),
+('Deep Purple', 'Hertford'),
+('Queen', 'London'),
+('Pink Floyd', 'London'),
+('Guns N'' Roses', 'Los Angeles'),
+('Nirvana', 'Aberdeen'),
+('Red Hot Chili Peppers', 'Los Angeles');
+
+-- 2) Attach styles (Rock / Metal / etc.) using name-based mapping
+INSERT INTO band_styles (band_id, style_id)
+SELECT b.id, s.id
+FROM bands b
+JOIN musical_styles s ON s.name IN ('Metal', 'Rock', 'Indie')
+WHERE 1=0
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Metallica' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Metallica' AND s.name='Rock'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Iron Maiden' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Iron Maiden' AND s.name='Rock'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Black Sabbath' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Black Sabbath' AND s.name='Rock'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Judas Priest' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Megadeth' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Slayer' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Pantera' AND s.name='Metal'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Slipknot' AND s.name='Metal'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='AC/DC' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Led Zeppelin' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Deep Purple' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Queen' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Pink Floyd' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Guns N'' Roses' AND s.name='Rock'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Nirvana' AND s.name='Rock'
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Nirvana' AND s.name='Indie'
+
+UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
+WHERE b.name='Red Hot Chili Peppers' AND s.name='Rock';
+
+-- ======================================================
+-- Famous Rock / Metal musicians as users
+-- ======================================================
+
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+-- Metallica
+('james_hetfield','james@metallica.com','demo123','James','Hetfield','Los Angeles'),
+('lars_ulrich','lars@metallica.com','demo123','Lars','Ulrich','Los Angeles'),
+('kirk_hammett','kirk@metallica.com','demo123','Kirk','Hammett','Los Angeles'),
+('robert_trujillo','robert@metallica.com','demo123','Robert','Trujillo','Los Angeles');
+
+-- Iron Maiden
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('bruce_dickinson','bruce@ironmaiden.com','demo123','Bruce','Dickinson','London'),
+('steve_harris','steve@ironmaiden.com','demo123','Steve','Harris','London'),
+('dave_murray','dave@ironmaiden.com','demo123','Dave','Murray','London');
+
+-- Black Sabbath
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('ozzy_osbourne','ozzy@blacksabbath.com','demo123','Ozzy','Osbourne','Birmingham'),
+('tony_iommi','tony@blacksabbath.com','demo123','Tony','Iommi','Birmingham'),
+('geezer_butler','geezer@blacksabbath.com','demo123','Geezer','Butler','Birmingham');
+
+-- Slayer
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('tom_araya','tom@slayer.net','demo123','Tom','Araya','Los Angeles'),
+('kerry_king','kerry@slayer.net','demo123','Kerry','King','Los Angeles');
+
+-- Slipknot
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('corey_taylor','corey@slipknot.com','demo123','Corey','Taylor','Des Moines'),
+('mick_thomson','mick@slipknot.com','demo123','Mick','Thomson','Des Moines');
+
+-- Nirvana
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('kurt_cobain','kurt@nirvana.com','demo123','Kurt','Cobain','Aberdeen'),
+('dave_grohl','dave@nirvana.com','demo123','Dave','Grohl','Aberdeen');
+
+-- Queen
+INSERT INTO users (username, email, password_hash, first_name, last_name, city)
+VALUES
+('freddie_mercury','freddie@queen.com','demo123','Freddie','Mercury','London'),
+('brian_may','brian@queen.com','demo123','Brian','May','London'),
+('roger_taylor','roger@queen.com','demo123','Roger','Taylor','London');
+
+-- ======================================================
+-- Band members (famous lineups)
+-- ======================================================
+
+INSERT INTO band_members (band_id, user_id, role)
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Metallica' AND u.username='james_hetfield';
+
+INSERT INTO band_members (band_id, user_id, role)
+SELECT b.id, u.id, 'drums'
+FROM bands b JOIN users u
+WHERE b.name='Metallica' AND u.username='lars_ulrich';
+
+INSERT INTO band_members (band_id, user_id, role)
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Metallica' AND u.username='kirk_hammett';
+
+INSERT INTO band_members (band_id, user_id, role)
+SELECT b.id, u.id, 'bass'
+FROM bands b JOIN users u
+WHERE b.name='Metallica' AND u.username='robert_trujillo';
+
+
+-- Iron Maiden
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Iron Maiden' AND u.username='bruce_dickinson';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'bass'
+FROM bands b JOIN users u
+WHERE b.name='Iron Maiden' AND u.username='steve_harris';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Iron Maiden' AND u.username='dave_murray';
+
+
+-- Black Sabbath
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Black Sabbath' AND u.username='ozzy_osbourne';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Black Sabbath' AND u.username='tony_iommi';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'bass'
+FROM bands b JOIN users u
+WHERE b.name='Black Sabbath' AND u.username='geezer_butler';
+
+
+-- Slayer
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Slayer' AND u.username='tom_araya';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Slayer' AND u.username='kerry_king';
+
+
+-- Slipknot
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Slipknot' AND u.username='corey_taylor';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Slipknot' AND u.username='mick_thomson';
+
+
+-- Nirvana
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Nirvana' AND u.username='kurt_cobain';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'drums'
+FROM bands b JOIN users u
+WHERE b.name='Nirvana' AND u.username='dave_grohl';
+
+
+-- Queen
+INSERT INTO band_members
+SELECT b.id, u.id, 'vocals'
+FROM bands b JOIN users u
+WHERE b.name='Queen' AND u.username='freddie_mercury';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'guitar'
+FROM bands b JOIN users u
+WHERE b.name='Queen' AND u.username='brian_may';
+
+INSERT INTO band_members
+SELECT b.id, u.id, 'drums'
+FROM bands b JOIN users u
+WHERE b.name='Queen' AND u.username='roger_taylor';

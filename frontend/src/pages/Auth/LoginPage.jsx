@@ -3,7 +3,7 @@ import "./LoginPage.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { loginUser } from "../../services/UserService";
+import { loginUser } from "../../services/AuthService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function LoginPage() {
         return;
       }
 
-      const data = await res.json(); // expected: { token: "..." }
+      const data = await res.json(); 
       login(data.token);
 
       navigate("/", { replace: true });
