@@ -10,6 +10,7 @@ router.post('/login', signIn);
 
 // User routes
 router.get('/limit/:limit', getUsersLimit);
+router.get('/limit/:limit/:offset', getUsersLimit);
 router.get("/:id", getUserById);
 router.patch("/:id", updateUser);
 router.delete("/:id", deleteUser);

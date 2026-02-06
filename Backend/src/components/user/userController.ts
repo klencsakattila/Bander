@@ -7,14 +7,6 @@ export default function root(_req: Request, res: Response) {
     res.status(200).send("The server is running properly.");
 }
 
-function idIsNan(id: number, res: Response): boolean {
-    if(isNaN(id)){
-        res.status(400).send("Nem megfelelő formátumú azonosító.");
-        return false;
-    }
-    return true;
-};
-
 export async function signIn(req: any, res: any) {
     const { email, password } = req.body || {};
 
@@ -31,8 +23,6 @@ export async function signIn(req: any, res: any) {
             [email, password]
         ) as Array<any>;
 
-        await connection.end();
-
         if(!result || result.length === 0 || !result[0] || !result[0].id){
             res.status(401).send("Incorrect email or password.");
             return;
@@ -43,7 +33,16 @@ export async function signIn(req: any, res: any) {
             return;
         };
 
-        const token = jwt.sign({id: result[0].id}, config.jwtSecret, {expiresIn: "2h"});
+        const [adminResult] = await connection.query(
+            'SELECT is_admin FROM users WHERE id = ?',
+            [result[0].id]
+        ) as Array<any>;
+
+        const isAdmin = adminResult && adminResult[0] ? !!adminResult[0].is_admin : false;
+
+        const token = jwt.sign({id: result[0].id, is_admin: isAdmin}, config.jwtSecret, {expiresIn: "2h"});
+
+        await connection.end();
 
         res.status(201).send({token: token});
     }
@@ -79,8 +78,6 @@ export async function signUp(req: any, res: any) {
             [email, password]
         ) as Array<any>;
 
-        await connection.end();
-
         const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
 
         if(!insertId){
@@ -93,7 +90,16 @@ export async function signUp(req: any, res: any) {
             return;
         };
 
-        const token = jwt.sign({id: insertId}, config.jwtSecret, {expiresIn: "2h"});
+        const [adminResult] = await connection.query(
+            'SELECT is_admin FROM users WHERE id = ?',
+            [insertId]
+        ) as Array<any>;
+
+        const isAdmin = adminResult && adminResult[0] ? !!adminResult[0].is_admin : false;
+
+        const token = jwt.sign({id: insertId, is_admin: isAdmin}, config.jwtSecret, {expiresIn: "2h"});
+
+        await connection.end();
 
         res.status(201).send({token: token});
     }
@@ -111,6 +117,15 @@ export async function signUp(req: any, res: any) {
         res.status(500).send('Error creating user.');
     }
 };
+
+function idIsNan(id: number, res: Response): boolean {
+    if(isNaN(id)){
+        res.status(400).send("Id is not valid.");
+        return false;
+    }
+    return true;
+};
+
 
 export async function getUserById(req: Request, res: Response) {
     const id: number = parseInt(req.params.id);
@@ -184,14 +199,16 @@ export async function getUserById(req: Request, res: Response) {
 export async function getUsersLimit(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit) as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
+    const offsetParam = parseInt((req.query.offset || '0') as string);
+    const offset = isNaN(offsetParam) ? 0 : Math.max(0, offsetParam);
 
     const connection = await mysql.createConnection(config.database);
 
     try{
         // Get users basic info
         const [usersResult] = await connection.query(
-            'SELECT id, username, email, first_name, last_name, city, birth_date, created_at FROM users ORDER BY created_at DESC LIMIT ?',
-            [limit]
+            'SELECT id, username, email, first_name, last_name, city, birth_date, created_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            [limit, offset]
         ) as Array<any>;
 
         // Get instruments and styles for all users

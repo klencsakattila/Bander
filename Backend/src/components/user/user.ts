@@ -3,6 +3,7 @@ export interface IUser {
     username: string;
     email: string;
     password_hash: string;
+    is_admin?: number | boolean | null;
     first_name?: string | null;
     last_name?: string | null;
     city?: string | null;
@@ -15,6 +16,7 @@ export default class User implements IUser {
     username: string = "";
     email: string = "";
     password_hash: string = "";
+    is_admin: number | boolean | null = null;
     first_name: string | null = null;
     last_name: string | null = null;
     city: string | null = null;

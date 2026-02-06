@@ -37,3 +37,12 @@ export function verifyToken(req: any, res: any, next: any) {
         res.status(403).send("Invalid or expired token.");
     }
 };
+
+export function ensureAdmin(req: any, res: any, next: any) {
+    if (!req.user || !req.user.is_admin) {
+        res.status(403).send("Admin access required.");
+        return;
+    }
+
+    return next();
+}
