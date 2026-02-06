@@ -1,3 +1,4 @@
+-- Active: 1769172688017@@localhost@3306
 -- Demo seed for bander database (dummy data)
 USE bander;
 SET FOREIGN_KEY_CHECKS=0;

@@ -7,14 +7,6 @@ export default function root(_req: Request, res: Response) {
     res.status(200).send("The server is running properly.");
 }
 
-function idIsNan(id: number, res: Response): boolean {
-    if(isNaN(id)){
-        res.status(400).send("Nem megfelelő formátumú azonosító.");
-        return false;
-    }
-    return true;
-};
-
 export async function signIn(req: any, res: any) {
     const { email, password } = req.body || {};
 
@@ -111,6 +103,15 @@ export async function signUp(req: any, res: any) {
         res.status(500).send('Error creating user.');
     }
 };
+
+function idIsNan(id: number, res: Response): boolean {
+    if(isNaN(id)){
+        res.status(400).send("Id is not valid.");
+        return false;
+    }
+    return true;
+};
+
 
 export async function getUserById(req: Request, res: Response) {
     const id: number = parseInt(req.params.id);
