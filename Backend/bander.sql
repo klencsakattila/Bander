@@ -1,4 +1,4 @@
--- Active: 1770287366885@@127.0.0.1@3306@bander
+-- Active: 1770381984070@@localhost@3306@bander
 -- ======================================================
 -- Database
 -- ======================================================
@@ -17,12 +17,24 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) NOT NULL DEFAULT 0,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     city VARCHAR(50),
     birth_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE posts ADD COLUMN expires_at DATETIME NULL;
+
+ALTER TABLE users ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0;
+
+--Add an admin user for testing
+UPDATE users SET is_admin = 1 WHERE email = 'admin@example.com';
+
+--Test admin user added to db
+Insert INTO users (username,email,password_hash,first_name,last_name,city,birth_date,is_admin) VALUES
+('admin','admin@example.com','demo-hash','Admin','User','Budapest','1980-01-01',1);
 
 ALTER TABLE users MODIFY username VARCHAR(50) NULL;
 
@@ -96,6 +108,7 @@ CREATE TABLE posts (
     post_type ENUM('search','announcement','general') NOT NULL,
     post_message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL
 );
@@ -124,6 +137,24 @@ CREATE TABLE messages (
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ======================================================
+-- Reports
+-- ======================================================
+CREATE TABLE reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id INT NOT NULL,
+    reported_user_id INT NULL,
+    reported_band_id INT NULL,
+    reported_post_id INT NULL,
+    report_status ENUM('open','reviewing','resolved') NOT NULL DEFAULT 'open',
+    report_message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (reported_band_id) REFERENCES bands(id) ON DELETE SET NULL,
+    FOREIGN KEY (reported_post_id) REFERENCES posts(id) ON DELETE SET NULL
 );
 
 -- ======================================================

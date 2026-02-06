@@ -5,13 +5,15 @@ import config from "../../config/config";
 export async function getBandsLimit(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
+    const offsetParam = parseInt((req.query.offset || '0') as string);
+    const offset = isNaN(offsetParam) ? 0 : Math.max(0, offsetParam);
 
     const connection = await mysql.createConnection(config.database);
 
     try{
         const [result] = await connection.query(
-            'SELECT id, name, city, created_at FROM bands ORDER BY created_at DESC LIMIT ?',
-            [limit]
+            'SELECT id, name, city, created_at FROM bands ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            [limit, offset]
         ) as Array<any>;
 
         await connection.end();
@@ -31,13 +33,15 @@ export async function getBandsLimit(req: Request, res: Response) {
 export async function getLatestBandPosts(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
+    const offsetParam = parseInt((req.params.offset || req.query.offset || '0') as string);
+    const offset = isNaN(offsetParam) ? 0 : Math.max(0, offsetParam);
 
     const connection = await mysql.createConnection(config.database);
 
     try{
         const [result] = await connection.query(
-            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.band_id IS NOT NULL ORDER BY p.created_at DESC LIMIT ?',
-            [limit]
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.band_id IS NOT NULL ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
+            [limit, offset]
         ) as Array<any>;
 
         await connection.end();
@@ -51,6 +55,158 @@ export async function getLatestBandPosts(req: Request, res: Response) {
             // Ignore close errors
         }
         res.status(500).send('Error fetching band posts.');
+    }
+}
+
+export async function getBandPostById(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(isNaN(id)){
+        res.status(400).send("Invalid post id.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [result] = await connection.query(
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
+            [id]
+        ) as Array<any>;
+
+        if(!result || result.length === 0){
+            await connection.end();
+            res.status(404).send("Band post not found.");
+            return;
+        }
+
+        await connection.end();
+        res.status(200).send(result[0]);
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error fetching band post.');
+    }
+}
+
+export async function createBandPost(req: Request, res: Response) {
+    const { band_id, post_type, post_message, expires_at } = req.body || {};
+
+    if(!band_id || !post_type || !post_message || !expires_at){
+        res.status(400).send("Band ID, post type, post message, and expiry date are required.");
+        return;
+    }
+
+    const validTypes = ['search', 'announcement', 'general'];
+    if(!validTypes.includes(post_type)){
+        res.status(400).send("Invalid post type.");
+        return;
+    }
+
+    const expiresAtDate = new Date(expires_at);
+    if(isNaN(expiresAtDate.getTime())){
+        res.status(400).send("Invalid expiry date.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [band_id]
+        ) as Array<any>;
+
+        if(!bandCheck || bandCheck.length === 0){
+            await connection.end();
+            res.status(404).send("Band not found.");
+            return;
+        }
+
+        const [result] = await connection.query(
+            'INSERT INTO posts (band_id, post_type, post_message, expires_at) VALUES (?, ?, ?, ?)',
+            [band_id, post_type, post_message, expiresAtDate]
+        ) as Array<any>;
+
+        const insertId = (result && (result as any).insertId) ? (result as any).insertId : null;
+
+        if(!insertId){
+            await connection.end();
+            res.status(500).send("Unable to create band post.");
+            return;
+        }
+
+        const [postResult] = await connection.query(
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
+            [insertId]
+        ) as Array<any>;
+
+        await connection.end();
+        res.status(201).send(postResult[0]);
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error creating band post.');
+    }
+}
+
+export async function deleteBandPost(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(isNaN(id)){
+        res.status(400).send("Invalid post id.");
+        return;
+    }
+
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [postCheck] = await connection.query(
+            'SELECT id, expires_at FROM posts WHERE id = ? AND band_id IS NOT NULL',
+            [id]
+        ) as Array<any>;
+
+        if(!postCheck || postCheck.length === 0){
+            await connection.end();
+            res.status(404).send("Band post not found.");
+            return;
+        }
+
+        const expiresAt = postCheck[0].expires_at ? new Date(postCheck[0].expires_at) : null;
+        const now = new Date();
+
+        if(!expiresAt || expiresAt.getTime() > now.getTime()){
+            await connection.end();
+            res.status(403).send("Band post is not expired.");
+            return;
+        }
+
+        await connection.query(
+            'DELETE FROM posts WHERE id = ? AND band_id IS NOT NULL',
+            [id]
+        );
+
+        await connection.end();
+        res.status(200).send({ message: "Band post deleted successfully." });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error deleting band post.');
     }
 }
 
