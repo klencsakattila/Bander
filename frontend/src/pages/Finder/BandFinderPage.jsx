@@ -4,68 +4,41 @@ import "./BandFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useAuth } from "../../context/AuthContext";
 import { getAllBands } from "../../services/BandService";
+import { useFilterOptions } from "../../hooks/useFilterOptions";
+import { band as bandG } from "../../utils/fieldGetters";
 
 export default function BandFinderPage() {
   const { token } = useAuth();
-
   const [bands, setBands] = useState([]);
-  const [cities, setCities] = useState([]);
-
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ city: "" });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-
-    async function load() {
+    (async () => {
       try {
         setLoading(true);
-        setError("");
-
         const data = await getAllBands(token);
-        const list = Array.isArray(data) ? data : [];
-
-        if (cancelled) return;
-
-        setBands(list);
-
-        const uniqueCities = [
-          ...new Set(
-            list
-              .map((b) => b.bandLocation ?? b.city ?? b.location)
-              .filter(Boolean)
-              .map(String)
-          ),
-        ].sort((a, b) => a.localeCompare(b));
-
-        setCities(uniqueCities);
+        if (!cancelled) setBands(Array.isArray(data) ? data : []);
       } catch (e) {
-        if (!cancelled) setError(e.message || "Failed to load bands");
+        if (!cancelled) setError(e?.message || "Failed to load bands");
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
+    })();
+    return () => (cancelled = true);
   }, [token]);
 
-  const filteredBands = useMemo(() => {
+  const opts = useFilterOptions(bands, { cities: bandG.city });
+
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-
     return bands.filter((b) => {
-      const name = (b.bandName ?? b.name ?? "").toLowerCase();
-      const loc = b.city;
-
-      const nameOk = !q || name.includes(q);
-      const cityOk = !filters.city || String(loc) === filters.city;
-
-      return nameOk && cityOk;
+      const name = bandG.name(b).toLowerCase();
+      const city = bandG.city(b);
+      return (!q || name.includes(q)) && (!filters.city || String(city) === filters.city);
     });
   }, [bands, search, filters.city]);
 
@@ -75,43 +48,28 @@ export default function BandFinderPage() {
   return (
     <div className="band-finder-page">
       <div className="band-search">
-        <input
-          type="text"
-          placeholder="Search for Bands"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <input placeholder="Search for Bands" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <div className="band-finder-layout">
         <aside className="band-filters">
           <label>City</label>
-          <select
-            value={filters.city}
-            onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))}
-          >
+          <select value={filters.city} onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))}>
             <option value="">All</option>
-            {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+            {opts.cities.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </aside>
 
         <div className="band-grid">
-          {filteredBands.map((band) => {
-            const name = band.bandName ?? band.name ?? "Band";
-            const loc = band.bandLocation ?? band.city ?? band.location ?? "";
-
-            return (
-              <Link key={band.id} to={`/band/${band.id}`} className="band-card">
-                <img src={placeholder} alt={name} />
-                <h4>{name}</h4>
-                <p className="muted">Location: {loc}</p>
-              </Link>
-            );
-          })}
+          {filtered.map((b) => (
+            <Link key={bandG.id(b)} to={`/band/${bandG.id(b)}`} className="band-card">
+              <img src={placeholder} alt={bandG.name(b)} />
+              <h4>{bandG.name(b)}</h4>
+              <p className="muted">Location: {bandG.city(b)}</p>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
