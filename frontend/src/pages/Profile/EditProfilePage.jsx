@@ -1,133 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
 import "./EditProfileSettings.css";
 import placeholder from "../../assets/images/default-avatar.png";
-import { useAuth } from "../../context/AuthContext";
-import { getUserById } from "../../services/UserService";
+import { useEditProfileSettings } from "../../hooks/useUser";
 
 export default function EditProfileSettings() {
   // IMPORTANT:
   // AuthContext-nek tudnia kell a logged-in user id-ját (pl. token decode-ból)
-  const { token, userId, isAuth } = useAuth();
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState("");
-
-  const [user, setUser] = useState(null);
-
-  const [form, setForm] = useState({
-    first_name: "",
-    username: "",
-    last_name: "",
-    email: "",
-    city: "",
-    birth_date: "", // yyyy-mm-dd
-    password: "",
-
-    // UI-only (not in your SQL schema currently)
-    instruments: "",
-    styles: "",
-    description: "",
-  });
-
-  const normalizeUser = (data) => {
-    if (!data) return null;
-    // your backend sends result array for getUserById
-    if (Array.isArray(data)) return data[0] || null;
-    return data;
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        setLoading(true);
-        setError("");
-        setSuccess("");
-
-        if (!isAuth) {
-          setError("You must be logged in to edit your profile.");
-          return;
-        }
-
-        if (!userId) {
-          // This means AuthContext doesn't provide userId yet
-          setError("Missing logged-in user id. Add userId to AuthContext (decode token).");
-          return;
-        }
-
-        const data = await getUserById(userId, token);
-        const u = normalizeUser(data);
-
-        if (cancelled) return;
-
-        if (!u) {
-          setError("User not found.");
-          return;
-        }
-
-        setUser(u);
-
-        const birth = u.birth_date ? String(u.birth_date).slice(0, 10) : "";
-
-        setForm((p) => ({
-          ...p,
-          first_name: u.first_name ?? "",
-          last_name: u.last_name ?? "",
-          username: u.username ?? "",
-          email: u.email ?? "",
-          city: u.city ?? "",
-          birth_date: birth,
-          password: "",
-
-          // UI-only fields still local
-          instruments: "",
-          styles: "",
-          description: "",
-        }));
-      } catch (e) {
-        if (!cancelled) setError(e?.message || "Failed to load user");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [token, userId, isAuth]);
-
-  const fullName = useMemo(() => {
-    const fn = form.first_name?.trim();
-    const ln = form.last_name?.trim();
-    return `${fn} ${ln}`.trim() || "—";
-  }, [form.first_name, form.last_name]);
-
-  function onChange(field) {
-    return (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
-  }
-
-  async function onSubmit(e) {
-  e.preventDefault();
-  setSaving(true);
-  setError("");
-  setSuccess("");
-
-  try {
-    if (!isAuth) throw new Error("Not logged in.");
-    if (!userId) throw new Error("Missing logged-in user id.");
-
-    // ❗ nincs backend update, csak UI feedback
-    setSuccess("Saving is not available yet.");
-  } catch (e2) {
-    setError(e2?.message || "Failed");
-  } finally {
-    setSaving(false);
-  }
-}
+  const {
+    loading,
+    error,
+    success,
+    saving,
+    form,
+    fullName,
+    onChange,
+    onSubmit,
+  } = useEditProfileSettings();
 
 
   if (loading) return <p style={{ padding: 40 }}>Loading profile...</p>;

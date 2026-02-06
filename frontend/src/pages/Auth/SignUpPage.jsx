@@ -3,7 +3,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./SignUpPage.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; // ha máshol van nálad, igazítsd
-import { signUp } from "../../services/AuthService"; // <- az előbb létrehozott
+import { registerUser } from "../../services/AuthService"; // <- az előbb létrehozott
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export default function SignUpPage() {
       setSubmitting(true);
 
       // ✅ backend call
-      const data = await signUp(email, pass1); // expects { token }
+      const data = await registerUser({ email, password: pass1 }); // expects { token }
       if (!data?.token) {
         throw new Error("No token returned from server.");
       }

@@ -10,13 +10,46 @@ export default function ArtistProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userId, isAuth } = useAuth();
-
-  // user should contain your logged-in user's info, at least user.id
-  // If you only store token, decode it or also store user object during login.
-
   const [artist, setArtist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const normalizeInstruments = (val) => {
+    if (!val) return null;
+  
+    // if backend sends JSON as a string
+    if (typeof val === "string") {
+      // might already be "guitar, bass"
+      try {
+        const parsed = JSON.parse(val);
+        return normalizeInstruments(parsed);
+      } catch {
+        return val;
+      }
+    }
+  
+    // if backend sends array: ["Guitar", "Bass"]
+    if (Array.isArray(val)) {
+      return val
+        .map((x) => {
+          if (typeof x === "string") return x;
+          // array of objects: [{name:"Guitar"}] or [{instrument:"Guitar"}]
+          return x?.name ?? x?.instrument ?? x?.title ?? "";
+        })
+        .filter(Boolean)
+        .join(", ");
+    }
+  
+    // if backend sends object
+    if (typeof val === "object") {
+      return val.name ?? val.instrument ?? null;
+    }
+  
+    return String(val);
+  };
+  
+
+
 
   useEffect(() => {
     async function loadArtist() {
@@ -38,8 +71,9 @@ export default function ArtistProfilePage() {
           city: row.city,
           birthDate: row.birth_date,
           createdAt: row.created_at,
+          instruments: normalizeInstruments(row.instruments),
         };
-
+        console.log("instruments raw:", row.instruments, typeof row.instruments);
         setArtist(mapped);
       } catch (err) {
         console.error(err);
@@ -52,6 +86,7 @@ export default function ArtistProfilePage() {
 
     if (id) loadArtist();
   }, [id]);
+
 
   function handleSendMessage() {
     if (!artist) return;
