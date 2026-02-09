@@ -22,8 +22,7 @@ export default function EventFinderPage() {
       try {
         setLoading(true);
         const data = await getLatestBandPosts(20, token);
-        const list = Array.isArray(data) ? data : [];
-        if (!cancelled) setPosts(list.length ? list : demoPosts);
+        if (!cancelled) setPosts(Array.isArray(data) ? data : []);
       } catch (e) {
         if (!cancelled) setError(e?.message || "Failed to load events");
       } finally {

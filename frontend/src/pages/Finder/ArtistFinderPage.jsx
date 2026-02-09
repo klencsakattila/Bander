@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ArtistFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useAuth } from "../../context/AuthContext";
 import { getUsersLimit } from "../../services/UserService";
+import { getAllGenres } from "../../services/GenreService";
+import { getAllInstruments } from "../../services/InstrumentService";
 import { useInfiniteList } from "../../hooks/useInfiniteList";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { user } from "../../utils/fieldGetters";
@@ -12,22 +14,61 @@ export default function ArtistFinderPage() {
   const { token } = useAuth();
   const LIMIT = 20;
 
-  const { items: artists, loading, error, bottomRef, loadingMore, hasMore } = useInfiniteList({
-    enabled: Boolean(token),
-    fetchPage: () => getUsersLimit(LIMIT, token),
-    getId: user.id,
-    maxTriesPerLoad: 5,
+  const fetchPage = useCallback(() => getUsersLimit(20, token), [token]);
+
+  const { items: artists, loading, error, bottomRef, loadingMore, hasMore } =
+    useInfiniteList({
+      enabled: Boolean(token),
+      fetchPage,
+      getId: (u) => u?.id,
   });
 
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ city: "", instrument: "", genre: "", band: "" });
+  const [genreList, setGenreList] = useState([]);
+  const [instrumentList, setInstrumentList] = useState([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
+
+  // Fetch genres and instruments from backend
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setFiltersLoading(true);
+        const [genres, instruments] = await Promise.all([
+          getAllGenres(token),
+          getAllInstruments(token),
+        ]);
+        if (!cancelled) {
+          setGenreList(Array.isArray(genres) ? genres : []);
+          setInstrumentList(Array.isArray(instruments) ? instruments : []);
+        }
+      } catch (e) {
+        console.error("Failed to load filters:", e);
+        if (!cancelled) {
+          setGenreList([]);
+          setInstrumentList([]);
+        }
+      } finally {
+        if (!cancelled) setFiltersLoading(false);
+      }
+    })();
+    return () => (cancelled = true);
+  }, [token]);
 
   const opts = useFilterOptions(artists, {
     cities: user.city,
-    instruments: user.instruments,
-    genres: user.genres,
     bands: user.band,
   });
+
+  // Extract genre and instrument names from backend data
+  const genreNames = useMemo(() => {
+    return genreList.map((g) => g?.name || g).filter(Boolean).sort();
+  }, [genreList]);
+
+  const instrumentNames = useMemo(() => {
+    return instrumentList.map((i) => i?.name || i).filter(Boolean).sort();
+  }, [instrumentList]);
 
   const filteredArtists = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -71,7 +112,7 @@ export default function ArtistFinderPage() {
           <label>Instrument(s)</label>
           <select value={filters.instrument} onChange={(e) => setFilters((p) => ({ ...p, instrument: e.target.value }))}>
             <option value="">All</option>
-            {opts.instruments.map((i) => (
+            {instrumentNames.map((i) => (
               <option key={i} value={i}>{i}</option>
             ))}
           </select>
@@ -79,7 +120,7 @@ export default function ArtistFinderPage() {
           <label>Genre(s)</label>
           <select value={filters.genre} onChange={(e) => setFilters((p) => ({ ...p, genre: e.target.value }))}>
             <option value="">All</option>
-            {opts.genres.map((g) => (
+            {genreNames.map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
           </select>

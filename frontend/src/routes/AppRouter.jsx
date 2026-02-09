@@ -13,7 +13,8 @@ import BandProfilePage from "../pages/Profile/BandProfilePage";
 import EditProfilePage from "../pages/Profile/EditProfilePage";
 import MessagesPage from "../pages/Messages/MessagePage";
 import EventFinderPage from "../pages/Finder/EventFinderPage";
-import AboutPage from "../pages/AboutPAge";
+import AboutPage from "../pages/AboutPage";
+import EditBandPage from "../pages/Band/EditBandPage";
 
 export default function AppRouter() {
   return (
@@ -33,6 +34,8 @@ export default function AppRouter() {
         <Route path="/profile/settings" element={<EditProfilePage />} />
         <Route path="/message/:userId" element={<MessagesPage />} />
         <Route path="/events" element={<EventFinderPage />} />
+        <Route path="/bands/create" element={<EditBandPage />} />
+        <Route path="/bands/manage/:id" element={<EditBandPage />} />
 
       </Route>
     </Routes>

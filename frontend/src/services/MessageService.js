@@ -27,3 +27,25 @@ export async function sendMessageToUser(otherUserId, { token, text } = {}) {
     body: { text },
   });
 }
+
+
+// POST /messages  body: { thread_id, sender_id, message }
+export function createMessage({ thread_id, sender_id, message }, token) {
+  if (!thread_id || !sender_id || !message)
+    throw new Error("thread_id, sender_id and message are required");
+
+  return apiFetch(`/messages`, {
+    method: "POST",
+    body: { thread_id, sender_id, message },
+    token,
+  });
+}
+
+// DELETE /messages/:id
+export function deleteMessage(id, token) {
+  if (!id) throw new Error("id is required");
+  return apiFetch(`/messages/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
