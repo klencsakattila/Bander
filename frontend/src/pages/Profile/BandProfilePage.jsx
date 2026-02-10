@@ -5,26 +5,27 @@ import placeholder from "../../assets/images/default-avatar.png";
 import eventBadge from "../../assets/images/event-badge.png";
 import { getBandById, getLatestBandPosts } from "../../services/BandService";
 import { useAuth } from "../../context/AuthContext";
+import { formatISODate } from "../../utils/date";
+import { useLoadById } from "../../hooks/useLoadById";
 
 export default function BandProfilePage() {
   const { id } = useParams();
   const bandIdNum = Number(id);
-
   const { token } = useAuth();
 
-  const [band, setBand] = useState(null);
+  // ✅ Band load is now handled by hook
+  const { data: band, loading, error } = useLoadById(id, getBandById);
+
   const [posts, setPosts] = useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // demo fallback for the band page
-  const demoBandPosts = useMemo(
-    () => [
+  // demo fallback posts (depends on band name/id)
+  const demoBandPosts = useMemo(() => {
+    const bandName = band?.bandName ?? band?.name ?? band?.band_name ?? "Band";
+    return [
       {
         id: 9001,
         band_id: bandIdNum,
-        band_name: band?.bandName ?? "Band",
+        band_name: bandName,
         post_type: "announcement",
         post_message: "🎤 New gig coming soon! Follow us for the exact date + venue details.",
         created_at: new Date().toISOString(),
@@ -32,84 +33,61 @@ export default function BandProfilePage() {
       {
         id: 9002,
         band_id: bandIdNum,
-        band_name: band?.bandName ?? "Band",
+        band_name: bandName,
         post_type: "search",
         post_message: "We’re looking for a new member! DM us if you want to join.",
         created_at: new Date(Date.now() - 86400000).toISOString(),
       },
-    ],
-    [band?.bandName, bandIdNum]
-  );
+    ];
+  }, [bandIdNum, band]);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadBandAndPosts() {
+    async function loadPosts() {
       try {
-        setLoading(true);
-        setError("");
-
-        const bandData = await getBandById(id);
-
-        // fetch latest posts (band posts)
-        // note: endpoint returns mixed bands, so we filter client-side
         const postData = await getLatestBandPosts(20, token);
         const list = Array.isArray(postData) ? postData : [];
-
         if (cancelled) return;
 
-        setBand(bandData);
-
         const onlyThisBand = list.filter((p) => Number(p?.band_id) === bandIdNum);
-
-        // if no posts exist for this band, show demo posts
         setPosts(onlyThisBand.length ? onlyThisBand : demoBandPosts);
-      } catch (err) {
-        console.error(err);
-        if (!cancelled) setError("Band not found");
-      } finally {
-        if (!cancelled) setLoading(false);
+      } catch (e) {
+        if (!cancelled) setPosts(demoBandPosts);
       }
     }
 
-    loadBandAndPosts();
+    // only load posts once we have a valid band id
+    if (Number.isFinite(bandIdNum)) loadPosts();
 
     return () => {
       cancelled = true;
     };
-  }, [id, token, bandIdNum, demoBandPosts]);
+  }, [token, bandIdNum, demoBandPosts]);
 
-  const formatDate = (d) => {
-    if (!d) return "";
-    const dt = new Date(d);
-    if (Number.isNaN(dt.getTime())) return String(d).slice(0, 10);
-    return dt.toISOString().slice(0, 10);
-  };
+  if (loading) return <p style={{ padding: "40px" }}>Loading band...</p>;
+  if (error) return <p style={{ padding: "40px", color: "red" }}>Band not found</p>;
+  if (!band) return <p style={{ padding: "40px" }}>No band data.</p>;
 
-  if (loading) {
-    return <p style={{ padding: "40px" }}>Loading band...</p>;
-  }
-
-  if (error) {
-    return <p style={{ padding: "40px", color: "red" }}>{error}</p>;
-  }
+  const bandTitle = band.bandName ?? band.name ?? band.band_name ?? "Band";
+  const bandCity = band.bandLocation ?? band.city ?? band.location ?? "";
 
   return (
     <div className="band-profile-page">
       {/* Header */}
       <div className="band-header">
-        <h1>{band.band_name}</h1>
+        <h1>{bandTitle}</h1>
       </div>
 
       {/* Top section */}
       <div className="band-top">
         {/* Band info */}
         <div className="band-info-card">
-          <img src={placeholder} alt={band.bandName} />
+          <img src={placeholder} alt={bandTitle} />
 
           <div className="band-info-text">
-            <h3>{band.name}</h3>
-            <p>{band.city}</p>
+            <h3>{bandTitle}</h3>
+            <p>{bandCity}</p>
             <p>Instrument(s): —</p>
             <p>Genre(s): —</p>
             <p>Open spots: —</p>
@@ -145,12 +123,10 @@ export default function BandProfilePage() {
               <img src={eventBadge} alt="Event" />
 
               <p>
-                 {p.post_type} – {formatDate(p.created_at)}
+                {p.post_type} – {formatISODate(p.created_at)}
               </p>
 
               <p>{p.post_message}</p>
-
-              {/* optional: link later to a post detail page */}
               <span>See more…</span>
             </div>
           ))}

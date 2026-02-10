@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 
 import ArtistCard from "../components/common/NewArtistCard";
 import { getUsersLimit } from "../services/UserService";
-import { getAllBands, getLatestBandPosts } from "../services/BandService";
+import { getBandsLimit ,getLatestBandPosts } from "../services/BandService";
 
 export default function HomePage() {
   const { token, isAuth } = useAuth();
@@ -27,7 +27,7 @@ export default function HomePage() {
 
       const [usersData, bandsData, postsData] = await Promise.all([
         getUsersLimit(8, token),      // token opcionális
-        getAllBands(token),           // token opcionális
+        getBandsLimit(8, 0, token),           // token opcionális
         getLatestBandPosts(4, token), // token opcionális
         
       ]);

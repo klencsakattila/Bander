@@ -151,6 +151,19 @@ export async function getUserById(req: Request, res: Response) {
 
         const user = userResult[0];
 
+        // Get user's band (if any)
+        const [bandResult] = await connection.query(
+            `SELECT b.id, b.name
+             FROM band_members bm
+             INNER JOIN bands b ON b.id = bm.band_id
+             WHERE bm.user_id = ?
+             LIMIT 1`,
+            [id]
+        ) as Array<any>;
+        const band = (bandResult && bandResult.length > 0)
+            ? { id: bandResult[0].id, name: bandResult[0].name }
+            : null;
+
         // Get user instruments
         const [instrumentsResult] = await connection.query(
             `SELECT i.id, i.name
@@ -180,7 +193,8 @@ export async function getUserById(req: Request, res: Response) {
         const result = {
             ...userWithoutPassword,
             instruments: instruments,
-            styles: styles
+            styles: styles,
+            band: band
         };
 
         await connection.end();
@@ -234,9 +248,19 @@ export async function getUsersLimit(req: Request, res: Response) {
                 userIds
             ) as Array<any>;
 
+            // Get bands for these users (if any)
+            const [bandsResult] = await connection.query(
+                `SELECT bm.user_id, b.id AS band_id, b.name AS band_name
+                 FROM band_members bm
+                 INNER JOIN bands b ON b.id = bm.band_id
+                 WHERE bm.user_id IN (${userIds.map(() => '?').join(',')})`,
+                userIds
+            ) as Array<any>;
+
             // Group instruments and styles by user_id
             const instrumentsByUser: { [key: number]: string[] } = {};
             const stylesByUser: { [key: number]: string[] } = {};
+            const bandByUser: { [key: number]: { id: number; name: string } } = {};
 
             instrumentsResult.forEach((row: any) => {
                 if(!instrumentsByUser[row.user_id]){
@@ -252,11 +276,19 @@ export async function getUsersLimit(req: Request, res: Response) {
                 stylesByUser[row.user_id].push(row.name);
             });
 
+            // If a user can be in multiple bands, keep the first one encountered.
+            bandsResult.forEach((row: any) => {
+                if(!bandByUser[row.user_id]){
+                    bandByUser[row.user_id] = { id: row.band_id, name: row.band_name };
+                }
+            });
+
             // Combine data
             const result = usersResult.map((user: any) => ({
                 ...user,
                 instruments: instrumentsByUser[user.id] || [],
-                styles: stylesByUser[user.id] || []
+                styles: stylesByUser[user.id] || [],
+                band: bandByUser[user.id] || null
             }));
 
             await connection.end();

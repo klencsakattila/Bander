@@ -82,3 +82,24 @@ export async function createInstrument(req: Request, res: Response) {
         res.status(500).send("Error creating instrument.");
     }
 }
+
+export async function getAllInstruments(req: Request, res: Response) {
+    const connection = await mysql.createConnection(config.database);
+
+    try {
+        const [result] = await connection.query(
+            "SELECT id, name FROM instruments ORDER BY name ASC"
+        ) as Array<any>;
+
+        await connection.end();
+        res.status(200).send(result);
+    } catch (err) {
+        console.log(err);
+        try {
+            await connection.end();
+        } catch (closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send("Error fetching instruments.");
+    }
+}

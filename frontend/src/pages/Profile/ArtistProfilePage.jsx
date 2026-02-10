@@ -1,113 +1,51 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import "./ArtistProfilePage.css";
 import avatar from "../../assets/images/default-avatar.png";
 import { FaInstagram, FaFacebook, FaYoutube, FaSpotify } from "react-icons/fa";
 import { getUserById } from "../../services/UserService";
-import { useAuth } from "../../context/AuthContext"; // <-- assuming you have this
+import { useAuth } from "../../context/AuthContext";
+import { normalizeStringArray } from "../../utils/normalize";
+import { useLoadById } from "../../hooks/useLoadById";
 
 export default function ArtistProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userId, isAuth } = useAuth();
-  const [artist, setArtist] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  const normalizeInstruments = (val) => {
-    if (!val) return null;
-  
-    // if backend sends JSON as a string
-    if (typeof val === "string") {
-      // might already be "guitar, bass"
-      try {
-        const parsed = JSON.parse(val);
-        return normalizeInstruments(parsed);
-      } catch {
-        return val;
-      }
-    }
-  
-    // if backend sends array: ["Guitar", "Bass"]
-    if (Array.isArray(val)) {
-      return val
-        .map((x) => {
-          if (typeof x === "string") return x;
-          // array of objects: [{name:"Guitar"}] or [{instrument:"Guitar"}]
-          return x?.name ?? x?.instrument ?? x?.title ?? "";
-        })
-        .filter(Boolean)
-        .join(", ");
-    }
-  
-    // if backend sends object
-    if (typeof val === "object") {
-      return val.name ?? val.instrument ?? null;
-    }
-  
-    return String(val);
-  };
-  
+  const { data: row, loading, error } = useLoadById(id, getUserById);
 
+  // map backend → UI shape
+  const artist = useMemo(() => {
+    if (!row) return null;
 
-
-  useEffect(() => {
-    async function loadArtist() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const data = await getUserById(id);
-        const row = Array.isArray(data) ? data[0] : data;
-
-        if (!row) throw new Error("Artist not found");
-
-        const mapped = {
-          id: row.id,
-          username: row.username,
-          email: row.email,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          city: row.city,
-          birthDate: row.birth_date,
-          createdAt: row.created_at,
-          instruments: normalizeInstruments(row.instruments),
-        };
-        console.log("instruments raw:", row.instruments, typeof row.instruments);
-        setArtist(mapped);
-      } catch (err) {
-        console.error(err);
-        setError("Artist not found");
-        setArtist(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (id) loadArtist();
-  }, [id]);
-
+    return {
+      id: row.id,
+      username: row.username,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      city: row.city,
+      instruments: normalizeStringArray(row.instruments),
+      styles: normalizeStringArray(row.styles),
+      band: row.band ?? null,
+    };
+  }, [row]);
 
   function handleSendMessage() {
     if (!artist) return;
 
-    // if not logged in -> go login
     if (!isAuth || !userId) {
       navigate("/login");
       return;
     }
 
-    // block self messaging
     if (String(userId) === String(artist.id)) {
       alert("You can't message yourself.");
       return;
     }
-    console.log("Current user ID:", userId);
-    console.log("Artist ID:", artist.id);
 
     navigate(`/message/${artist.id}`);
   }
-
 
   if (loading) return <p style={{ padding: "40px" }}>Loading artist...</p>;
   if (error) return <p style={{ padding: "40px", color: "red" }}>{error}</p>;
@@ -126,7 +64,16 @@ export default function ArtistProfilePage() {
 
           <p className="artist-meta">{displayName || "—"}</p>
           <p className="artist-meta">City: {artist.city || "—"}</p>
-          <p className="artist-meta">Instrument(s): {artist.instruments || "—"}</p>
+
+          <p className="artist-meta">
+            Instrument(s):{" "}
+            {artist.instruments.length ? artist.instruments.join(", ") : "—"}
+          </p>
+
+          <p className="artist-meta">
+            Styles: {artist.styles.length ? artist.styles.join(", ") : "—"}
+          </p>
+
           <p className="artist-meta">Band: {artist.band || "—"}</p>
         </div>
 
@@ -143,9 +90,6 @@ export default function ArtistProfilePage() {
             <FaYoutube />
           </div>
         </div>
-
-        {/* keep link usage correct if you need it */}
-        {/* <Link to="/frontend">Frontend</Link> */}
       </div>
 
       {/* RIGHT */}
