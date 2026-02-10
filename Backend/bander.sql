@@ -22,6 +22,7 @@ CREATE TABLE users (
     last_name VARCHAR(50),
     city VARCHAR(50),
     birth_date DATE,
+    profile_image_url VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,6 +46,8 @@ CREATE TABLE bands (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
     city VARCHAR(50),
+    profile_image_url VARCHAR(255) NULL,
+    banner_image_url VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -107,6 +110,7 @@ CREATE TABLE posts (
     band_id INT NULL,
     post_type ENUM('search','announcement','general') NOT NULL,
     post_message TEXT NOT NULL,
+    image_url VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at DATETIME NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,

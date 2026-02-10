@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import mysql from "mysql2/promise";
 import config from "../../config/config";
 import jwt from "jsonwebtoken";
+import { toPublicUrl } from "../../middleware/upload";
 
 export default function root(_req: Request, res: Response) {
     res.status(200).send("The server is running properly.");
@@ -207,7 +208,7 @@ export async function getUsersLimit(req: Request, res: Response) {
     try{
         // Get users basic info
         const [usersResult] = await connection.query(
-            'SELECT id, username, email, first_name, last_name, city, birth_date, created_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            'SELECT id, username, email, first_name, last_name, city, birth_date, profile_image_url, created_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
             [limit, offset]
         ) as Array<any>;
 
@@ -444,3 +445,49 @@ export async function deleteUser(req: Request, res: Response) {
         res.status(500).send('Error deleting user.');
     }
 };
+
+export async function uploadUserProfileImage(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(!idIsNan(id, res)){
+        return;
+    }
+
+    if(!req.file){
+        res.status(400).send("No image file uploaded.");
+        return;
+    }
+
+    const imageUrl = toPublicUrl("users", req.file.filename);
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [userCheck] = await connection.query(
+            'SELECT id FROM users WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(userCheck.length === 0){
+            res.status(404).send("User not found.");
+            await connection.end();
+            return;
+        }
+
+        await connection.query(
+            'UPDATE users SET profile_image_url = ? WHERE id = ?',
+            [imageUrl, id]
+        );
+
+        await connection.end();
+        res.status(200).send({ profile_image_url: imageUrl });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error uploading user profile image.');
+    }
+}

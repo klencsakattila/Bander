@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mysql from "mysql2/promise";
 import config from "../../config/config";
+import { toPublicUrl } from "../../middleware/upload";
 
 export async function getBandsLimit(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
@@ -12,7 +13,7 @@ export async function getBandsLimit(req: Request, res: Response) {
 
     try{
         const [result] = await connection.query(
-            'SELECT id, name, city, created_at FROM bands ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            'SELECT id, name, city, profile_image_url, banner_image_url, created_at FROM bands ORDER BY created_at DESC LIMIT ? OFFSET ?',
             [limit, offset]
         ) as Array<any>;
 
@@ -40,7 +41,7 @@ export async function getLatestBandPosts(req: Request, res: Response) {
 
     try{
         const [result] = await connection.query(
-            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.band_id IS NOT NULL ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.image_url, p.created_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.band_id IS NOT NULL ORDER BY p.created_at DESC LIMIT ? OFFSET ?',
             [limit, offset]
         ) as Array<any>;
 
@@ -70,7 +71,7 @@ export async function getBandPostById(req: Request, res: Response) {
 
     try{
         const [result] = await connection.query(
-            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.image_url, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
             [id]
         ) as Array<any>;
 
@@ -142,7 +143,7 @@ export async function createBandPost(req: Request, res: Response) {
         }
 
         const [postResult] = await connection.query(
-            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
+            'SELECT p.id, p.band_id, p.post_type, p.post_message, p.image_url, p.created_at, p.expires_at, b.name as band_name FROM posts p LEFT JOIN bands b ON p.band_id = b.id WHERE p.id = ? AND p.band_id IS NOT NULL',
             [insertId]
         ) as Array<any>;
 
@@ -647,5 +648,146 @@ export async function deleteBand(req: Request, res: Response) {
             // Ignore close errors
         }
         res.status(500).send('Error deleting band.');
+    }
+}
+
+export async function uploadBandProfileImage(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(isNaN(id)){
+        res.status(400).send("Invalid band id.");
+        return;
+    }
+
+    if(!req.file){
+        res.status(400).send("No image file uploaded.");
+        return;
+    }
+
+    const imageUrl = toPublicUrl("bands/profile", req.file.filename);
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(bandCheck.length === 0){
+            res.status(404).send("Band not found.");
+            await connection.end();
+            return;
+        }
+
+        await connection.query(
+            'UPDATE bands SET profile_image_url = ? WHERE id = ?',
+            [imageUrl, id]
+        );
+
+        await connection.end();
+        res.status(200).send({ profile_image_url: imageUrl });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error uploading band profile image.');
+    }
+}
+
+export async function uploadBandBannerImage(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(isNaN(id)){
+        res.status(400).send("Invalid band id.");
+        return;
+    }
+
+    if(!req.file){
+        res.status(400).send("No image file uploaded.");
+        return;
+    }
+
+    const imageUrl = toPublicUrl("bands/banner", req.file.filename);
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [bandCheck] = await connection.query(
+            'SELECT id FROM bands WHERE id = ?',
+            [id]
+        ) as Array<any>;
+
+        if(bandCheck.length === 0){
+            res.status(404).send("Band not found.");
+            await connection.end();
+            return;
+        }
+
+        await connection.query(
+            'UPDATE bands SET banner_image_url = ? WHERE id = ?',
+            [imageUrl, id]
+        );
+
+        await connection.end();
+        res.status(200).send({ banner_image_url: imageUrl });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error uploading band banner image.');
+    }
+}
+
+export async function uploadBandPostImage(req: Request, res: Response) {
+    const id: number = parseInt(req.params.id);
+
+    if(isNaN(id)){
+        res.status(400).send("Invalid post id.");
+        return;
+    }
+
+    if(!req.file){
+        res.status(400).send("No image file uploaded.");
+        return;
+    }
+
+    const imageUrl = toPublicUrl("bands/posts", req.file.filename);
+    const connection = await mysql.createConnection(config.database);
+
+    try{
+        const [postCheck] = await connection.query(
+            'SELECT id FROM posts WHERE id = ? AND band_id IS NOT NULL',
+            [id]
+        ) as Array<any>;
+
+        if(postCheck.length === 0){
+            res.status(404).send("Band post not found.");
+            await connection.end();
+            return;
+        }
+
+        await connection.query(
+            'UPDATE posts SET image_url = ? WHERE id = ?',
+            [imageUrl, id]
+        );
+
+        await connection.end();
+        res.status(200).send({ image_url: imageUrl });
+    }
+    catch(err){
+        console.log(err);
+        try {
+            await connection.end();
+        } catch(closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send('Error uploading band post image.');
     }
 }
