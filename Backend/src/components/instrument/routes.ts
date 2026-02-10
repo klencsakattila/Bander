@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { getInstrumentById, createInstrument } from "./instrumentController";
+import { getInstrumentById, createInstrument, getAllInstruments } from "./instrumentController";
 import { verifyToken, ensureAdmin } from "../../middleware/auth";
 
 const router: Router = Router();
 
+router.get("/", getAllInstruments);
 router.get("/:id", getInstrumentById);
 router.post("/", verifyToken, ensureAdmin, createInstrument);
 
