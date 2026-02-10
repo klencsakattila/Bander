@@ -1,8 +1,9 @@
 import { apiFetch } from "./apiClient";
 
-export async function getUsersLimit(limit = 10, token) {
-  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 10));
-  return apiFetch(`/users/limit/${safeLimit}`, { token });
+export async function getUsersLimit(limit = 20, offset = 0, token) {
+  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 20));
+  const safeOffset = Math.max(0, Number(offset) || 0);
+  return apiFetch(`/users/limit/${safeLimit}/${safeOffset}`, { token });
 }
 
 export async function getUserById(id, token) {
@@ -39,4 +40,16 @@ export async function deleteUser(id, token) {
     method: "DELETE",
     token,
   });
+}
+
+export async function getMe(token) {
+  const res = await fetch("/api/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch /me");
+
+  return res.json();
 }

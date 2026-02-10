@@ -1,17 +1,21 @@
 import { apiFetch } from "./apiClient";
 
-export async function getBandsLimit(limit = 10, token) {
-  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 10));
-  return apiFetch(`/bands/limit/${safeLimit}`, { token });
+const clampInt = (v, def, min, max) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, Math.floor(n)));
+};
+
+export async function getBandsLimit(limit = 10, offset = 0, token) {
+  const safeLimit = clampInt(limit, 10, 1, 20);
+  const safeOffset = clampInt(offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  return apiFetch(`/bands/limit/${safeLimit}/${safeOffset}`, { token });
 }
 
-export async function getAllBands(token) {
-  return getBandsLimit(10, token);
-}
-
-export async function getLatestBandPosts(limit = 3, token) {
-  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 3));
-  return apiFetch(`/bands/post/limit/${safeLimit}`, { token });
+export async function getLatestBandPosts(limit = 3, offset = 0, token) {
+  const safeLimit = clampInt(limit, 3, 1, 20);
+  const safeOffset = clampInt(offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  return apiFetch(`/bands/post/limit/${safeLimit}/${safeOffset}`, { token });
 }
 
 export async function getBandById(bandId, token) {
