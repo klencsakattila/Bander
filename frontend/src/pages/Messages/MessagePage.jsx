@@ -2,16 +2,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./MessagePage.css";
 import { useAuth } from "../../context/AuthContext";
-import { getMessagesWithUser, sendMessageToUser } from "../../services/MessageService";
+import { createOrGetThread, getThreadById } from "../../services/ThreadService";
+import { createMessage } from "../../services/MessageService";
+import { getUserById } from "../../services/UserService";
+
 
 export default function MessagesPage() {
-  const { userId } = useParams(); // other user id
+  const { userId: otherUserId } = useParams(); // other user id
   const navigate = useNavigate();
   const { token, isAuth, userId: myUserId } = useAuth();
+  const [otherUser, setOtherUser] = useState(null);
 
-  const otherUser = useMemo(() => ({ id: userId }), [userId]);
 
   const listRef = useRef(null);
+
+  const [threadId, setThreadId] = useState(null);
 
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
@@ -20,7 +25,7 @@ export default function MessagesPage() {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const [nextCursor, setNextCursor] = useState(null);
+  const [limit, setLimit] = useState(20); // backend supports limit (DESC)
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState("");
 
@@ -29,16 +34,44 @@ export default function MessagesPage() {
     if (!isAuth) navigate("/login", { replace: true });
   }, [isAuth, navigate]);
 
-  // block chatting with yourself (in case user types URL)
+  // block chatting with yourself
   useEffect(() => {
-    if (myUserId && userId && String(myUserId) === String(userId)) {
+    if (myUserId && otherUserId && String(myUserId) === String(otherUserId)) {
       navigate("/", { replace: true });
     }
-  }, [myUserId, userId, navigate]);
+  }, [myUserId, otherUserId, navigate]);
 
-  // --- initial load (latest 10) ---
+  // 1) create or get thread between users
   useEffect(() => {
-    if (!userId || !token) return;
+    if (!token || !myUserId || !otherUserId) return;
+
+    let alive = true;
+
+    async function ensureThread() {
+      try {
+        setError("");
+        const data = await createOrGetThread(myUserId, otherUserId, token);
+        const id = data?.thread?.id;
+
+        if (!id) throw new Error("Thread id missing from response");
+        if (!alive) return;
+
+        setThreadId(id);
+      } catch (e) {
+        if (!alive) return;
+        setError(String(e?.message || "Failed to create/load thread"));
+      }
+    }
+
+    ensureThread();
+    return () => {
+      alive = false;
+    };
+  }, [token, myUserId, otherUserId]);
+
+  // 2) load messages for thread (backend gives DESC, we reverse for UI)
+  useEffect(() => {
+    if (!token || !threadId) return;
 
     let alive = true;
 
@@ -47,46 +80,66 @@ export default function MessagesPage() {
         setLoadingInitial(true);
         setError("");
 
-        const { items, nextCursor: cursor } = await getMessagesWithUser(userId, {
-          token,
-          limit: 10,
-          before: null,
-        });
+        const data = await getThreadById(threadId, limit, token);
+        const raw = Array.isArray(data?.messages) ? data.messages : [];
+
+        // backend: ORDER BY sent_at DESC LIMIT ?
+        // UI wants old -> new
+        const chronological = [...raw].reverse();
 
         if (!alive) return;
 
-        // IMPORTANT: your backend should return messages in chronological order (old->new) OR you sort here.
-        // We'll assume it returns old->new for a chat view:
-        setMessages(items);
-        setNextCursor(cursor);
-        setHasMore(Boolean(cursor) && items.length > 0);
+        setMessages(chronological);
 
-        // scroll to bottom after first paint
+        // if backend returned fewer than requested, no more
+        setHasMore(raw.length >= limit && limit < 100);
+
+        // scroll to bottom after initial load / updates
         requestAnimationFrame(() => {
           const el = listRef.current;
           if (el) el.scrollTop = el.scrollHeight;
         });
       } catch (e) {
         if (!alive) return;
-        console.error(e);
-        setError(e.message || "Failed to load messages");
+        setError(String(e?.message || "Failed to load messages"));
+        setMessages([]);
       } finally {
         if (alive) setLoadingInitial(false);
       }
     }
 
     load();
-
     return () => {
       alive = false;
     };
-  }, [userId, token]);
+  }, [token, threadId, limit]);
+  useEffect(() => {
+    if (!token || !otherUserId) return;
 
-  // --- load older when user scrolls to top ---
+    let alive = true;
+
+    async function loadOtherUser() {
+      try {
+        const u = await getUserById(otherUserId, token);
+        if (!alive) return;
+        setOtherUser(u);
+      } catch {
+        if (!alive) return;
+        setOtherUser(null);
+      }
+    }
+
+    loadOtherUser();
+    return () => {
+      alive = false;
+    };
+  }, [token, otherUserId]);
+
+
+  // 3) load older: backend doesn't give cursor, so we increase limit (up to 100)
   async function loadOlder() {
-    if (!userId || !token) return;
     if (!hasMore || loadingOlder || loadingInitial) return;
-    if (!nextCursor) return;
+    if (limit >= 100) return;
 
     const el = listRef.current;
     if (!el) return;
@@ -97,27 +150,15 @@ export default function MessagesPage() {
     try {
       setLoadingOlder(true);
 
-      const { items, nextCursor: cursor } = await getMessagesWithUser(userId, {
-        token,
-        limit: 10,
-        before: nextCursor,
-      });
+      // increase limit by 20, backend returns latest N messages
+      const nextLimit = Math.min(100, limit + 20);
+      setLimit(nextLimit);
 
-      // Prepend older items
-      setMessages((prev) => [...items, ...prev]);
-
-      // update cursor / hasMore
-      setNextCursor(cursor);
-      setHasMore(Boolean(cursor) && items.length > 0);
-
-      // keep viewport stable (so it doesn't jump)
+      // keep viewport stable after rerender
       requestAnimationFrame(() => {
         const newScrollHeight = el.scrollHeight;
         el.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
       });
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Failed to load older messages");
     } finally {
       setLoadingOlder(false);
     }
@@ -126,73 +167,75 @@ export default function MessagesPage() {
   function onScroll() {
     const el = listRef.current;
     if (!el) return;
-
-    // when near top, fetch older
-    if (el.scrollTop <= 20) {
-      loadOlder();
-    }
+    if (el.scrollTop <= 20) loadOlder();
   }
 
-  // --- send message ---
+  // 4) send message
   async function handleSend(e) {
     e.preventDefault();
     const text = draft.trim();
-    if (!text || !userId || !token) return;
+    if (!text || !token || !threadId || !myUserId) return;
 
     try {
       setSending(true);
+      setError("");
 
-      const created = await sendMessageToUser(userId, { token, text });
+      const created = await createMessage(
+        { thread_id: threadId, sender_id: myUserId, message: text },
+        token
+      );
 
-      // Append new message (fallback shape if backend returns something else)
+      // backend returns: { id, thread_id, sender_id, message, sent_at }
       const newMsg = created ?? {
         id: Date.now(),
+        thread_id: threadId,
         sender_id: myUserId,
-        text,
-        created_at: new Date().toISOString(),
+        message: text,
+        sent_at: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, newMsg]);
       setDraft("");
 
-      // auto-scroll bottom
       requestAnimationFrame(() => {
         const el = listRef.current;
         if (el) el.scrollTop = el.scrollHeight;
       });
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Failed to send message");
+    } catch (e2) {
+      setError(String(e2?.message || "Failed to send message"));
     } finally {
       setSending(false);
     }
   }
+  
+  const title = useMemo(() => {
+    if (!otherUser) return `Chat with user #${otherUserId}`;
 
-  // --- rendering helpers ---
+    const fullName = [otherUser.first_name, otherUser.last_name].filter(Boolean).join(" ");
+    const username = otherUser.username ? `(${otherUser.username})` : "";
+
+    return `${fullName || "Unknown"} ${username}`.trim();
+  }, [otherUser, otherUserId]);
+
+
   function isMine(msg) {
-    // adapt to your backend fields:
-    // could be msg.sender === "me", msg.sender_id, msg.from_user_id, etc.
-    const senderId = msg.sender_id ?? msg.from_user_id ?? msg.senderId ?? null;
-    if (senderId == null) return false;
-    return String(senderId) === String(myUserId);
+    const senderId = msg.sender_id ?? msg.senderId ?? msg.from_user_id ?? null;
+    return senderId != null && String(senderId) === String(myUserId);
   }
 
-  if (loadingInitial) {
-    return <p style={{ padding: "40px" }}>Loading messages...</p>;
-  }
+  if (loadingInitial) return <p style={{ padding: "40px" }}>Loading messages...</p>;
 
   return (
     <div className="messages-page">
       <header className="messages-header">
         <h2>Messages</h2>
-        <div className="messages-subtitle">Chat with user {otherUser.name}</div>
+        <div className="messages-subtitle">{title}</div>
       </header>
 
       <main className="messages-wrapper">
         <section className="messages-panel">
-          {error && <div style={{ padding: "10px", color: "red" }}>{error}</div>}
+          {error && <div style={{ padding: "10px", color: "red" }}>{String(error)}</div>}
 
-          {/* Message list */}
           <div className="messages-list" ref={listRef} onScroll={onScroll}>
             {loadingOlder && (
               <div style={{ textAlign: "center", padding: "8px", opacity: 0.7 }}>
@@ -203,7 +246,7 @@ export default function MessagesPage() {
             {messages.map((m) => (
               <div key={m.id} className={`message-row ${isMine(m) ? "right" : "left"}`}>
                 <div className={`message-bubble ${isMine(m) ? "me" : "other"}`}>
-                  {m.text ?? m.message ?? ""}
+                  {m.message ?? m.text ?? ""}
                 </div>
               </div>
             ))}
@@ -215,7 +258,6 @@ export default function MessagesPage() {
             )}
           </div>
 
-          {/* Input bar */}
           <form className="message-input" onSubmit={handleSend}>
             <input
               type="text"

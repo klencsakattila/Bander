@@ -1,6 +1,10 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import { Routes, Route } from "react-router-dom";
+
+import AdminRoute from "./AdminRoute";
+import AdminModerationPage from "../pages/Moderation/AdminModerationPage";
 
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/Auth/LoginPage";
@@ -15,6 +19,7 @@ import MessagesPage from "../pages/Messages/MessagePage";
 import EventFinderPage from "../pages/Finder/EventFinderPage";
 import AboutPage from "../pages/AboutPage";
 import EditBandPage from "../pages/Band/EditBandPage";
+import AdminModerationPage from "../pages/Moderation/AdminModerationPage";
 
 export default function AppRouter() {
   return (
@@ -36,8 +41,17 @@ export default function AppRouter() {
         <Route path="/events" element={<EventFinderPage />} />
         <Route path="/bands/create" element={<EditBandPage />} />
         <Route path="/bands/manage/:id" element={<EditBandPage />} />
-
+        <Route path="/admin/moderation" element={<AdminModerationPage />} />
       </Route>
+      {/* admin only */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminModerationPage />
+          </AdminRoute>
+        }
+      />
     </Routes>
   );
 }
