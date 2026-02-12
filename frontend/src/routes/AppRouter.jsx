@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
-import { Routes, Route } from "react-router-dom";
 
 import AdminRoute from "./AdminRoute";
 import AdminModerationPage from "../pages/Moderation/AdminModerationPage";
@@ -19,7 +18,7 @@ import MessagesPage from "../pages/Messages/MessagePage";
 import EventFinderPage from "../pages/Finder/EventFinderPage";
 import AboutPage from "../pages/AboutPage";
 import EditBandPage from "../pages/Band/EditBandPage";
-import AdminModerationPage from "../pages/Moderation/AdminModerationPage";
+
 
 export default function AppRouter() {
   return (
