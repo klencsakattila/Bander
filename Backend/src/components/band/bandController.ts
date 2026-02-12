@@ -1,7 +1,22 @@
 import { Request, Response } from "express";
 import mysql from "mysql2/promise";
+import fs from "fs";
 import config from "../../config/config";
 import { toPublicUrl } from "../../middleware/upload";
+
+async function deleteUploadedFile(filePath?: string) {
+    if(!filePath){
+        return;
+    }
+
+    try {
+        await fs.promises.unlink(filePath);
+    } catch(fileErr: any) {
+        if(fileErr && fileErr.code !== "ENOENT"){
+            console.log(fileErr);
+        }
+    }
+}
 
 export async function getBandsLimit(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
@@ -665,6 +680,7 @@ export async function uploadBandProfileImage(req: Request, res: Response) {
         ) as Array<any>;
 
         if(bandCheck.length === 0){
+            await deleteUploadedFile(req.file.path);
             res.status(404).send("Band not found.");
             await connection.end();
             return;
@@ -680,6 +696,7 @@ export async function uploadBandProfileImage(req: Request, res: Response) {
     }
     catch(err){
         console.log(err);
+        await deleteUploadedFile(req.file?.path);
         try {
             await connection.end();
         } catch(closeErr) {
@@ -712,6 +729,7 @@ export async function uploadBandBannerImage(req: Request, res: Response) {
         ) as Array<any>;
 
         if(bandCheck.length === 0){
+            await deleteUploadedFile(req.file.path);
             res.status(404).send("Band not found.");
             await connection.end();
             return;
@@ -727,6 +745,7 @@ export async function uploadBandBannerImage(req: Request, res: Response) {
     }
     catch(err){
         console.log(err);
+        await deleteUploadedFile(req.file?.path);
         try {
             await connection.end();
         } catch(closeErr) {
