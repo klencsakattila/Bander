@@ -1,36 +1,43 @@
 import { useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./ArtistProfilePage.css";
-import avatar from "../../assets/images/default-avatar.png";
+import avatarFallback from "../../assets/images/default-avatar.png";
 import { FaInstagram, FaFacebook, FaYoutube, FaSpotify } from "react-icons/fa";
 import { getUserById } from "../../services/UserService";
 import { useAuth } from "../../context/AuthContext";
-import { normalizeStringArray } from "../../utils/normalize";
 import { useLoadById } from "../../hooks/useLoadById";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const toAbsUrl = (u) => (u && typeof u === "string" && u.startsWith("/uploads/") ? `${API_BASE}${u}` : u);
 
 export default function ArtistProfilePage() {
   const { id } = useParams();
   const { token, isAuth, userId } = useAuth();
-
-  const loader = useCallback((uid) => getUserById(uid, token), [token]);
-
-  const { data: row, loading, error } = useLoadById(id, loader, [token]);
   const navigate = useNavigate();
 
+  const loader = useCallback((uid) => getUserById(uid, token), [token]);
+  const { data: row, loading, error } = useLoadById(id, loader, [token]);
 
-  // map backend → UI shape
   const artist = useMemo(() => {
     if (!row) return null;
 
     return {
       id: row.id,
-      username: row.username,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      city: row.city,
-      instruments: normalizeStringArray(row.instruments),
-      styles: normalizeStringArray(row.styles),
+      username: row.username ?? "",
+      firstName: row.first_name ?? "",
+      lastName: row.last_name ?? "",
+      city: row.city ?? "",
+      instruments: Array.isArray(row.instruments)
+        ? row.instruments
+        : row.instruments
+        ? [String(row.instruments)]
+        : [],
+      styles: Array.isArray(row.styles) ? row.styles : row.styles ? [String(row.styles)] : [],
       band: row.band ?? null,
+      description: row.description ?? null,
+
+      // ✅ this comes from your backend upload endpoint
+      profileImageUrl: row.profile_image_url ?? "",
     };
   }, [row]);
 
@@ -51,33 +58,40 @@ export default function ArtistProfilePage() {
   }
 
   if (loading) return <p style={{ padding: "40px" }}>Loading artist...</p>;
-  if (error) return <p style={{ padding: "40px", color: "red" }}>{error}</p>;
+  if (error) return <p style={{ padding: "40px", color: "red" }}>{String(error)}</p>;
   if (!artist) return <p style={{ padding: "40px" }}>No artist data.</p>;
 
-  const displayUsername = artist.username ?? "Unknown";
+  const displayUsername = artist.username || "Unknown";
   const displayName = [artist.firstName, artist.lastName].filter(Boolean).join(" ");
+
+  const instrumentsText = artist.instruments.length ? artist.instruments.join(", ") : "—";
+  const stylesText = artist.styles.length ? artist.styles.join(", ") : "—";
+
+  // Optional fallback to localStorage (if you still want it):
+  const localKey = `bander:user:avatar:${artist.id}`;
+  let localAvatar = "";
+  try {
+    localAvatar = localStorage.getItem(localKey) || "";
+  } catch {
+    localAvatar = "";
+  }
+
+  // ✅ priority: backend url -> local fallback -> placeholder
+  const avatarSrc = toAbsUrl(artist.profileImageUrl) || localAvatar || avatarFallback;
 
   return (
     <div className="artist-profile-page">
       {/* LEFT */}
       <div className="artist-profile-left">
         <div className="artist-card">
-          <img src={avatar} alt={displayUsername} className="artist-avatar" />
+          <img src={avatarSrc} alt={displayUsername} className="artist-avatar" />
           <h3 className="artist-username">{displayUsername}</h3>
 
           <p className="artist-meta">{displayName || "—"}</p>
           <p className="artist-meta">City: {artist.city || "—"}</p>
 
-          <p className="artist-meta">
-            Instrument(s):{" "}
-            {artist.instruments.length ? artist.instruments.join(", ") : "—"}
-          </p>
-
-          <p className="artist-meta">
-            Styles: {artist.styles.length ? artist.styles.join(", ") : "—"}
-          </p>
-
-          {/* <p className="artist-meta">Band: {artist.band || "—"}</p> */}
+          <p className="artist-meta">Instrument(s): {instrumentsText}</p>
+          <p className="artist-meta">Styles: {stylesText}</p>
         </div>
 
         <button className="send-message-btn" onClick={handleSendMessage}>
@@ -98,7 +112,7 @@ export default function ArtistProfilePage() {
       {/* RIGHT */}
       <div className="artist-profile-right">
         <h3>Description</h3>
-        <p className="artist-description">—</p>
+        <p className="artist-description">{artist.description || "—"}</p>
       </div>
     </div>
   );

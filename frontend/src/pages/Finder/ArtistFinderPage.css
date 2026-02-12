@@ -124,6 +124,14 @@
   line-height: 1.2;
   color: rgba(38, 70, 83, 0.55);
 }
+.artist-card img {
+  width: 100%;
+  height: 160px;        /* fixed height so cards stay equal */
+  object-fit: cover;    /* crop nicely */
+  border-radius: 12px;
+  display: block;
+}
+
 
 /* ===============================
    RESPONSIVE

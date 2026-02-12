@@ -33,8 +33,6 @@ export default function LoginPage() {
       setLoading(true);
       const res = await loginUser({ email, password });
 
-      
-
       if (!res.ok) {
         const msg = await res.text().catch(() => "");
         setErrors((prev) => ({
@@ -44,14 +42,37 @@ export default function LoginPage() {
         return;
       }
 
-      const data = await res.json(); 
-      login(data.token);
+      const contentType = res.headers.get("content-type") || "";
+      let data;
 
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        // show backend message if it returned plain text
+        throw new Error(text || "Login failed");
+      }
+      console.log("LOGIN STATUS:", res.status);
+
+      const token =
+        data?.token ||
+        data?.access_token ||
+        data?.jwt;
+
+      if (!token || typeof token !== "string") {
+        console.log("Login response (no token):", data);
+        throw new Error("Login succeeded but token is missing in response");
+      }
+      console.log("LOGIN DATA:", data);
+
+
+      login(token);
       navigate("/", { replace: true });
+
     } catch (err) {
       setErrors((prev) => ({
         ...prev,
-        general: "Server error. Please try again.",
+        general: err?.message || "Server error. Please try again.",
       }));
     } finally {
       setLoading(false);

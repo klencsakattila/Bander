@@ -8,6 +8,12 @@ import { getAllGenres } from "../../services/GenreService";
 import { getAllInstruments } from "../../services/InstrumentService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { user } from "../../utils/fieldGetters";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const toAbsUrl = (u) =>
+  u && typeof u === "string" && u.startsWith("/uploads/")
+    ? `${API_BASE}${u}`
+    : u;
+
 
 export default function ArtistFinderPage() {
   const { token } = useAuth();
@@ -73,13 +79,13 @@ export default function ArtistFinderPage() {
             return {
               ...u,
               instruments: r?.instruments ?? u?.instruments,
-              genres:
-                r?.genres ??
-                r?.styles ??
-                r?.musical_styles ??
-                u?.genres,
+              genres: r?.genres ?? r?.styles ?? r?.musical_styles ?? u?.genres,
               band: r?.band ?? u?.band,
+
+              // ✅ profile picture from backend
+              profile_image_url: r?.profile_image_url ?? u?.profile_image_url ?? "",
             };
+
           })
         );
       } catch (e) {
@@ -237,6 +243,7 @@ export default function ArtistFinderPage() {
     });
   }, [artists, search, filters]);
 
+
   // ===============================
   // RENDER
   // ===============================
@@ -343,9 +350,10 @@ export default function ArtistFinderPage() {
                   className="artist-card"
                 >
                   <img
-                    src={placeholder}
+                    src={toAbsUrl(a?.profile_image_url) || placeholder}
                     alt={user.username(a) || "artist"}
                   />
+
                   <h4>{user.username(a) || "Unknown"}</h4>
                   <p>{fullName || "Artist"}</p>
                   <p>{user.city(a) || ""}</p>

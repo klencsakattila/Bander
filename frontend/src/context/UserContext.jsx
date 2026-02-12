@@ -37,7 +37,9 @@ export function UserProvider({ children }) {
         throw new Error(`getUserById returned non-JSON: ${data.slice(0, 80)}`);
       }
 
-      setUser(data);     // backend: getUserById tipikusan a user objectet adja vissza
+      const row = Array.isArray(data) ? data[0] : data;
+      setUser(row || null);
+     // backend: getUserById tipikusan a user objectet adja vissza
       setBand(null);     // ha band külön endpoint, majd később ide jön
     } catch (err) {
       if (String(err?.message || "").includes(" 401 ")) {
