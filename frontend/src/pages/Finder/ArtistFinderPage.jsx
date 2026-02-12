@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ArtistFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useAuth } from "../../context/AuthContext";
-import { getUsersLimit } from "../../services/UserService";
+import { getUsersLimit, getUserById } from "../../services/UserService";
 import { getAllGenres } from "../../services/GenreService";
 import { getAllInstruments } from "../../services/InstrumentService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
@@ -22,13 +22,76 @@ export default function ArtistFinderPage() {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({ city: "", instrument: "", genre: "", band: "" });
+  const [filters, setFilters] = useState({
+    city: "",
+    instrument: "",
+    genre: "",
+    band: "",
+  });
 
   const [genreList, setGenreList] = useState([]);
   const [instrumentList, setInstrumentList] = useState([]);
   const [filtersLoading, setFiltersLoading] = useState(true);
 
-  // ✅ load first page
+  // 🔥 Track which users already hydrated
+  const hydratedIdsRef = useRef(new Set());
+
+  // ===============================
+  // HYDRATE USERS (instrument/genre)
+  // ===============================
+  const hydrateUsers = useCallback(
+    async (rows) => {
+      if (!token || !rows?.length) return;
+
+      const toHydrate = rows.filter((u) => {
+        const id = user.id(u);
+        return id && !hydratedIdsRef.current.has(id);
+      });
+
+      if (!toHydrate.length) return;
+
+      toHydrate.forEach((u) => hydratedIdsRef.current.add(user.id(u)));
+
+      try {
+        const detailed = await Promise.all(
+          toHydrate.map(async (u) => {
+            const id = user.id(u);
+            const data = await getUserById(id, token);
+            const row = Array.isArray(data) ? data[0] : data;
+            return row ? { id, row } : null;
+          })
+        );
+
+        setArtists((prev) =>
+          prev.map((u) => {
+            const id = user.id(u);
+            const found = detailed.find((x) => x?.id === id);
+            if (!found) return u;
+
+            const r = found.row;
+
+            return {
+              ...u,
+              instruments: r?.instruments ?? u?.instruments,
+              genres:
+                r?.genres ??
+                r?.styles ??
+                r?.musical_styles ??
+                u?.genres,
+              band: r?.band ?? u?.band,
+            };
+          })
+        );
+      } catch (e) {
+        console.error("Hydration failed:", e);
+      }
+    },
+    [token]
+  );
+
+  // ===============================
+  // LOAD FIRST PAGE
+  // ===============================
   const loadFirstPage = useCallback(async () => {
     if (!token) return;
 
@@ -36,6 +99,7 @@ export default function ArtistFinderPage() {
       setError("");
       setLoading(true);
       setHasMore(true);
+      hydratedIdsRef.current.clear();
 
       const data = await getUsersLimit(LIMIT, 0, token);
       const rows = Array.isArray(data) ? data : [];
@@ -43,6 +107,9 @@ export default function ArtistFinderPage() {
       setArtists(rows);
       setOffset(rows.length);
       setHasMore(rows.length === LIMIT);
+
+      // 🔥 hydrate
+      hydrateUsers(rows);
     } catch (e) {
       setError(e?.message || "Failed to load artists");
       setArtists([]);
@@ -51,9 +118,11 @@ export default function ArtistFinderPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, hydrateUsers]);
 
-  // ✅ load more page
+  // ===============================
+  // LOAD MORE
+  // ===============================
   const loadMore = useCallback(async () => {
     if (!token || loadingMore || !hasMore) return;
 
@@ -72,19 +141,26 @@ export default function ArtistFinderPage() {
 
       setOffset((prev) => prev + rows.length);
       setHasMore(rows.length === LIMIT);
+
+      // 🔥 hydrate new rows
+      hydrateUsers(rows);
     } catch (e) {
       setError(e?.message || "Failed to load more artists");
     } finally {
       setLoadingMore(false);
     }
-  }, [token, offset, hasMore, loadingMore]);
+  }, [token, offset, hasMore, loadingMore, hydrateUsers]);
 
-  // initial fetch / token change
+  // ===============================
+  // INITIAL LOAD
+  // ===============================
   useEffect(() => {
     loadFirstPage();
   }, [loadFirstPage]);
 
-  // Fetch genres and instruments
+  // ===============================
+  // LOAD FILTER DATA
+  // ===============================
   useEffect(() => {
     let cancelled = false;
 
@@ -101,7 +177,6 @@ export default function ArtistFinderPage() {
           setInstrumentList(Array.isArray(instruments) ? instruments : []);
         }
       } catch (e) {
-        console.error("Failed to load filters:", e);
         if (!cancelled) {
           setGenreList([]);
           setInstrumentList([]);
@@ -114,20 +189,27 @@ export default function ArtistFinderPage() {
     return () => (cancelled = true);
   }, [token]);
 
-  // ✅ options update automatically when artists grows
+  // ===============================
+  // FILTER OPTIONS
+  // ===============================
   const opts = useFilterOptions(artists, {
     cities: user.city,
     bands: user.band,
   });
 
-  const genreNames = useMemo(() => {
-    return genreList.map((g) => g?.name || g).filter(Boolean).sort();
-  }, [genreList]);
+  const genreNames = useMemo(
+    () => genreList.map((g) => g?.name || g).filter(Boolean).sort(),
+    [genreList]
+  );
 
-  const instrumentNames = useMemo(() => {
-    return instrumentList.map((i) => i?.name || i).filter(Boolean).sort();
-  }, [instrumentList]);
+  const instrumentNames = useMemo(
+    () => instrumentList.map((i) => i?.name || i).filter(Boolean).sort(),
+    [instrumentList]
+  );
 
+  // ===============================
+  // FILTER LOGIC
+  // ===============================
   const filteredArtists = useMemo(() => {
     const q = search.trim().toLowerCase();
 
@@ -135,7 +217,8 @@ export default function ArtistFinderPage() {
       const cityOk = !filters.city || user.city(a) === filters.city;
 
       const inst = user.instruments(a);
-      const instrumentOk = !filters.instrument || inst.includes(filters.instrument);
+      const instrumentOk =
+        !filters.instrument || inst.includes(filters.instrument);
 
       const gen = user.genres(a);
       const genreOk = !filters.genre || gen.includes(filters.genre);
@@ -144,15 +227,19 @@ export default function ArtistFinderPage() {
       const bandOk = !filters.band || b === filters.band;
 
       const fullName = `${user.firstName(a)} ${user.lastName(a)}`.trim();
-      const hay = `${user.username(a)} ${fullName} ${user.city(a)} ${inst.join(" ")} ${gen.join(
+      const hay = `${user.username(a)} ${fullName} ${user.city(a)} ${inst.join(
         " "
-      )} ${b}`.toLowerCase();
+      )} ${gen.join(" ")} ${b}`.toLowerCase();
+
       const searchOk = !q || hay.includes(q);
 
       return cityOk && instrumentOk && genreOk && bandOk && searchOk;
     });
   }, [artists, search, filters]);
 
+  // ===============================
+  // RENDER
+  // ===============================
   if (loading) return <p style={{ padding: 40 }}>Loading artists...</p>;
   if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
 
@@ -171,7 +258,9 @@ export default function ArtistFinderPage() {
           <label>City</label>
           <select
             value={filters.city}
-            onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, city: e.target.value }))
+            }
           >
             <option value="">All</option>
             {opts.cities.map((c) => (
@@ -184,7 +273,9 @@ export default function ArtistFinderPage() {
           <label>Instrument(s)</label>
           <select
             value={filters.instrument}
-            onChange={(e) => setFilters((p) => ({ ...p, instrument: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, instrument: e.target.value }))
+            }
             disabled={filtersLoading}
           >
             <option value="">All</option>
@@ -198,7 +289,9 @@ export default function ArtistFinderPage() {
           <label>Genre(s)</label>
           <select
             value={filters.genre}
-            onChange={(e) => setFilters((p) => ({ ...p, genre: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, genre: e.target.value }))
+            }
             disabled={filtersLoading}
           >
             <option value="">All</option>
@@ -212,7 +305,9 @@ export default function ArtistFinderPage() {
           <label>Band</label>
           <select
             value={filters.band}
-            onChange={(e) => setFilters((p) => ({ ...p, band: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, band: e.target.value }))
+            }
           >
             <option value="">All</option>
             {opts.bands.map((b) => (
@@ -223,10 +318,15 @@ export default function ArtistFinderPage() {
           </select>
 
           <p style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
-            Showing {filteredArtists.length} / {artists.length} {!hasMore ? "(end)" : ""}
+            Showing {filteredArtists.length} / {artists.length}{" "}
+            {!hasMore ? "(end)" : ""}
           </p>
 
-          <button type="button" onClick={loadFirstPage} style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={loadFirstPage}
+            style={{ marginTop: 12 }}
+          >
             Refresh list
           </button>
         </aside>
@@ -235,21 +335,40 @@ export default function ArtistFinderPage() {
           <div className="artist-grid">
             {filteredArtists.map((a) => {
               const fullName = `${user.firstName(a)} ${user.lastName(a)}`.trim();
+
               return (
-                <Link key={user.id(a)} to={`/artist/${user.id(a)}`} className="artist-card">
-                  <img src={placeholder} alt={user.username(a) || "artist"} />
+                <Link
+                  key={user.id(a)}
+                  to={`/artist/${user.id(a)}`}
+                  className="artist-card"
+                >
+                  <img
+                    src={placeholder}
+                    alt={user.username(a) || "artist"}
+                  />
                   <h4>{user.username(a) || "Unknown"}</h4>
                   <p>{fullName || "Artist"}</p>
                   <p>{user.city(a) || ""}</p>
+
+                  {/* 🔥 Optional: show instruments & genres */}
+                  <p className="muted">
+                    {user.instruments(a).slice(0, 2).join(", ")}
+                  </p>
+                  <p className="muted">
+                    {user.genres(a).slice(0, 2).join(", ")}
+                  </p>
                 </Link>
               );
             })}
           </div>
 
-          {/* ✅ button under the grid */}
           <div style={{ padding: 20, display: "flex", justifyContent: "center" }}>
             {hasMore ? (
-              <button type="button" onClick={loadMore} disabled={loadingMore}>
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
                 {loadingMore ? "Loading..." : "Load more"}
               </button>
             ) : (
@@ -259,5 +378,4 @@ export default function ArtistFinderPage() {
         </div>
       </div>
     </div>
-  );
-}
+); }

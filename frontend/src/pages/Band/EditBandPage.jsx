@@ -279,10 +279,8 @@ export default function EditBandPage() {
           <h3 className="band-title">{bandTitle}</h3>
 
           <div className="band-meta">
-            <p>{band.description || "—"}</p>
-            <p>Instrument(s): {band.instruments || "—"}</p>
-            <p>Genre(s): {band.genres || "—"}</p>
-            <p>Open spots: {band.openSpots || "—"}</p>
+            <p>{band.city || "—"}</p>
+            <p>Open spots: {band.openSpots || "No open spots available."}</p>
           </div>
         </aside>
 
