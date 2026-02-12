@@ -4,6 +4,27 @@ import config from "../../config/config";
 
 const REPORT_STATUSES = ["open", "reviewing", "resolved"];
 
+export async function getAllReport(_req: Request, res: Response) {
+    const connection = await mysql.createConnection(config.database);
+
+    try {
+        const [result] = await connection.query(
+            "SELECT * FROM reports ORDER BY created_at DESC, id DESC"
+        ) as Array<any>;
+
+        await connection.end();
+        res.status(200).send(result);
+    } catch (err) {
+        console.log(err);
+        try {
+            await connection.end();
+        } catch (closeErr) {
+            // Ignore close errors
+        }
+        res.status(500).send("Error fetching reports.");
+    }
+}
+
 export async function getReportById(req: Request, res: Response) {
     const id: number = parseInt(req.params.id);
 
