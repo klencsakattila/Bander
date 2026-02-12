@@ -127,6 +127,24 @@ function idIsNan(id: number, res: Response): boolean {
     return true;
 };
 
+function normalizeIdList(value: any): number[] | null {
+    if(value === undefined){
+        return null;
+    }
+
+    const rawList = Array.isArray(value)
+        ? value
+        : typeof value === "string"
+            ? value.split(",")
+            : [value];
+
+    const ids = rawList
+        .map((item) => parseInt(String(item).trim(), 10))
+        .filter((item) => Number.isFinite(item) && item > 0);
+
+    return Array.from(new Set(ids));
+}
+
 
 export async function getUserById(req: Request, res: Response) {
     const id: number = parseInt(req.params.id);
@@ -318,10 +336,13 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     const { username, email, first_name, last_name, city, birth_date, password_hash } = req.body || {};
+    const instrumentIds = normalizeIdList(req.body?.instruments);
+    const styleIds = normalizeIdList(req.body?.styles);
 
     const connection = await mysql.createConnection(config.database);
 
     try{
+        await connection.beginTransaction();
         // Check if user exists
         const [userCheck] = await connection.query(
             'SELECT id FROM users WHERE id = ?',
@@ -330,6 +351,7 @@ export async function updateUser(req: Request, res: Response) {
 
         if(userCheck.length === 0){
             res.status(404).send("User not found.");
+            await connection.rollback();
             await connection.end();
             return;
         }
@@ -367,17 +389,52 @@ export async function updateUser(req: Request, res: Response) {
             updateValues.push(password_hash);
         }
 
-        if(updateFields.length === 0){
+        if(updateFields.length === 0 && instrumentIds === null && styleIds === null){
             res.status(400).send("No fields to update.");
+            await connection.rollback();
             await connection.end();
             return;
         }
 
-        updateValues.push(id);
+        if(updateFields.length > 0){
+            updateValues.push(id);
 
-        const updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
-        
-        await connection.query(updateQuery, updateValues);
+            const updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
+            
+            await connection.query(updateQuery, updateValues);
+        }
+
+        if(instrumentIds !== null){
+            await connection.query(
+                'DELETE FROM user_instruments WHERE user_id = ?',
+                [id]
+            );
+
+            if(instrumentIds.length > 0){
+                const values = instrumentIds.map(() => '(?, ?)').join(', ');
+                const params = instrumentIds.flatMap((instrumentId) => [id, instrumentId]);
+                await connection.query(
+                    `INSERT INTO user_instruments (user_id, instrument_id) VALUES ${values}`,
+                    params
+                );
+            }
+        }
+
+        if(styleIds !== null){
+            await connection.query(
+                'DELETE FROM user_styles WHERE user_id = ?',
+                [id]
+            );
+
+            if(styleIds.length > 0){
+                const values = styleIds.map(() => '(?, ?)').join(', ');
+                const params = styleIds.flatMap((styleId) => [id, styleId]);
+                await connection.query(
+                    `INSERT INTO user_styles (user_id, style_id) VALUES ${values}`,
+                    params
+                );
+            }
+        }
 
         // Get updated user with instruments and styles
         const [userResult] = await connection.query(
@@ -417,12 +474,14 @@ export async function updateUser(req: Request, res: Response) {
             styles: styles
         };
 
+        await connection.commit();
         await connection.end();
         res.status(200).send(result);
     }
     catch(err: any){
         console.log(err);
         try {
+            await connection.rollback();
             await connection.end();
         } catch(closeErr) {
             // Ignore close errors
