@@ -17,7 +17,6 @@ export function verifyToken(req: any, res: any, next: any) {
 
         const decodedToken = jwt.verify(token, config.jwtSecret) as any;
         
-        // Mindig check-elje hogy a user-nek minden adata mevan e adva
         if(!decodedToken || !decodedToken.id){
             res.status(403).send("Invalid token: missing user data.");
             return;

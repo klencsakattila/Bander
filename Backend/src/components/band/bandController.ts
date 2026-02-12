@@ -173,22 +173,13 @@ export async function deleteBandPost(req: Request, res: Response) {
 
     try{
         const [postCheck] = await connection.query(
-            'SELECT id, expires_at FROM posts WHERE id = ? AND band_id IS NOT NULL',
+            'SELECT id FROM posts WHERE id = ? AND band_id IS NOT NULL',
             [id]
         ) as Array<any>;
 
         if(!postCheck || postCheck.length === 0){
             await connection.end();
             res.status(404).send("Band post not found.");
-            return;
-        }
-
-        const expiresAt = postCheck[0].expires_at ? new Date(postCheck[0].expires_at) : null;
-        const now = new Date();
-
-        if(!expiresAt || expiresAt.getTime() > now.getTime()){
-            await connection.end();
-            res.status(403).send("Band post is not expired.");
             return;
         }
 
