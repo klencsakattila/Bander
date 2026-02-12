@@ -1,0 +1,54 @@
+services:
+  backend:
+    build: ./backend
+    container_name: bander-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=bander
+      - DB_PASSWORD=bander
+      - DB_NAME=bander
+      - JWT_SECRET=secret
+    networks:
+      - bander-net
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: bander-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Ha Vite-od env-et használ:
+      - VITE_API_URL=http://localhost:3000
+    networks:
+      - bander-net
+    depends_on:
+      - backend
+
+  db:
+    image: mysql:8.0
+    container_name: bander-db
+    environment:
+      - MYSQL_DATABASE=bander
+      - MYSQL_USER=bander
+      - MYSQL_PASSWORD=bander
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./backend/db/init:/docker-entrypoint-initdb.d
+    networks:
+      - bander-net
+
+networks:
+  bander-net:
+    driver: bridge
+
+volumes:
+  db-data:

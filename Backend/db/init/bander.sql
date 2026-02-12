@@ -1,7 +1,182 @@
--- Active: 1769172688017@@localhost@3306
--- Demo seed for bander database (dummy data)
+-- Active: 1770381984070@@localhost@3306@bander
+-- ======================================================
+-- Database Setup
+-- ======================================================
+DROP DATABASE IF EXISTS bander;
+CREATE DATABASE bander
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_hungarian_ci;
+
 USE bander;
-SET FOREIGN_KEY_CHECKS=0;
+
+-- ======================================================
+-- Tables: Users and Bands
+-- ======================================================
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    is_admin TINYINT(1) NOT NULL DEFAULT 0,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    city VARCHAR(50),
+    birth_date DATE,
+    profile_image_url VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bands (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    city VARCHAR(50),
+    profile_image_url VARCHAR(255) NULL,
+    banner_image_url VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE band_members (
+    band_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role VARCHAR(50),
+    PRIMARY KEY (band_id, user_id),
+    FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ======================================================
+-- Tables: Instruments and Styles
+-- ======================================================
+CREATE TABLE instruments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE user_instruments (
+    user_id INT NOT NULL,
+    instrument_id INT NOT NULL,
+    skill_level ENUM('beginner','intermediate','advanced') DEFAULT 'beginner',
+    PRIMARY KEY (user_id, instrument_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (instrument_id) REFERENCES instruments(id) ON DELETE CASCADE
+);
+
+CREATE TABLE musical_styles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE user_styles (
+    user_id INT NOT NULL,
+    style_id INT NOT NULL,
+    PRIMARY KEY (user_id, style_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (style_id) REFERENCES musical_styles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE band_styles (
+    band_id INT NOT NULL,
+    style_id INT NOT NULL,
+    PRIMARY KEY (band_id, style_id),
+    FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE,
+    FOREIGN KEY (style_id) REFERENCES musical_styles(id) ON DELETE CASCADE
+);
+
+-- ======================================================
+-- Tables: Posts, Threads, Messages
+-- ======================================================
+CREATE TABLE posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    band_id INT NULL,
+    post_type ENUM('search','announcement','general') NOT NULL,
+    post_message TEXT NOT NULL,
+    image_url VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL
+);
+
+CREATE TABLE threads (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE thread_users (
+    thread_id INT NOT NULL,
+    user_id INT NOT NULL,
+    PRIMARY KEY (thread_id, user_id),
+    FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    thread_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ======================================================
+-- Tables: Reports
+-- ======================================================
+CREATE TABLE reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id INT NOT NULL,
+    reported_user_id INT NULL,
+    reported_band_id INT NULL,
+    reported_post_id INT NULL,
+    report_status ENUM('open','reviewing','resolved') NOT NULL DEFAULT 'open',
+    report_message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (reported_band_id) REFERENCES bands(id) ON DELETE SET NULL,
+    FOREIGN KEY (reported_post_id) REFERENCES posts(id) ON DELETE SET NULL
+);
+
+-- ======================================================
+-- Functions and Triggers
+-- ======================================================
+DELIMITER $$
+CREATE FUNCTION login(email VARCHAR(30), pass VARCHAR(100))
+RETURNS INTEGER DETERMINISTIC
+BEGIN
+    DECLARE OK INTEGER;
+    SET OK = 0;
+    SELECT id INTO OK FROM users WHERE users.email = email AND users.password_hash = SHA2(pass, 256);
+    RETURN OK;
+END $$
+
+CREATE TRIGGER hash_user_password_before_insert
+BEFORE INSERT ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.password_hash IS NOT NULL AND NOT (NEW.password_hash REGEXP '^[0-9A-Fa-f]{64}$') THEN
+        SET NEW.password_hash = SHA2(NEW.password_hash, 256);
+    END IF;
+END $$
+
+CREATE TRIGGER hash_user_password_before_update
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.password_hash IS NOT NULL AND NEW.password_hash <> OLD.password_hash
+       AND NOT (NEW.password_hash REGEXP '^[0-9A-Fa-f]{64}$') THEN
+        SET NEW.password_hash = SHA2(NEW.password_hash, 256);
+    END IF;
+END $$
+DELIMITER ;
+
+-- ======================================================
+-- Seed Reset (safe to re-run before seeding)
+-- ======================================================
+SET FOREIGN_KEY_CHECKS = 0;
+
 TRUNCATE TABLE messages;
 TRUNCATE TABLE thread_users;
 TRUNCATE TABLE threads;
@@ -9,13 +184,26 @@ TRUNCATE TABLE posts;
 TRUNCATE TABLE band_styles;
 TRUNCATE TABLE user_styles;
 TRUNCATE TABLE user_instruments;
-TRUNCATE TABLE instruments;
 TRUNCATE TABLE band_members;
-TRUNCATE TABLE bands;
+TRUNCATE TABLE instruments;
 TRUNCATE TABLE musical_styles;
+TRUNCATE TABLE bands;
 TRUNCATE TABLE users;
-SET FOREIGN_KEY_CHECKS=1;
 
+SET FOREIGN_KEY_CHECKS = 1;
+
+ALTER TABLE messages AUTO_INCREMENT = 1;
+ALTER TABLE threads AUTO_INCREMENT = 1;
+ALTER TABLE posts AUTO_INCREMENT = 1;
+ALTER TABLE instruments AUTO_INCREMENT = 1;
+ALTER TABLE musical_styles AUTO_INCREMENT = 1;
+ALTER TABLE bands AUTO_INCREMENT = 1;
+ALTER TABLE users AUTO_INCREMENT = 1;
+
+-- ======================================================
+-- Seed Data: Base
+-- ======================================================
+USE bander;
 INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date) VALUES
 ('alice','alice@example.com','demo123','Alice','Smith','Budapest','1990-05-14'),
 ('bob','bob@example.com','demo123','Bob','Jones','Debrecen','1988-11-02'),
@@ -47,6 +235,9 @@ INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_
 ('nfekete','nfekete@bander.dev','demo123','Noemi','Fekete','Pecs','1998-06-22'),
 ('mmolnar','mmolnar@bander.dev','demo123','Mate','Molnar','Szeged','1987-03-05'),
 ('hmolnar','hmolnar@bander.dev','demo123','Hanna','Molnar','Budapest','2000-10-06');
+
+INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date,is_admin) VALUES
+('admin','admin@example.com','demo123','Admin','User','Budapest','1980-01-01',1);
 
 INSERT INTO bands (name,city) VALUES
 ('The Rockets','Budapest'),
@@ -664,11 +855,8 @@ INSERT INTO messages (thread_id,sender_id,message,sent_at) VALUES
 (15,29,'Oké, várom!','2025-12-27 02:04:00');
 
 -- ======================================================
--- Add famous Rock / Metal bands (NO messages/threads)
--- Works even if IDs change, because it maps by NAME.
+-- Seed Data: Famous Rock / Metal Bands
 -- ======================================================
-
--- 1) Insert bands (cities optional)
 INSERT INTO bands (name, city) VALUES
 ('Metallica', 'Los Angeles'),
 ('Iron Maiden', 'London'),
@@ -687,7 +875,6 @@ INSERT INTO bands (name, city) VALUES
 ('Nirvana', 'Aberdeen'),
 ('Red Hot Chili Peppers', 'Los Angeles');
 
--- 2) Attach styles (Rock / Metal / etc.) using name-based mapping
 INSERT INTO band_styles (band_id, style_id)
 SELECT b.id, s.id
 FROM bands b
@@ -741,60 +928,45 @@ WHERE b.name='Nirvana' AND s.name='Indie'
 UNION ALL SELECT b.id, s.id FROM bands b JOIN musical_styles s
 WHERE b.name='Red Hot Chili Peppers' AND s.name='Rock';
 
--- ======================================================
--- Famous Rock / Metal musicians as users
--- ======================================================
-
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
--- Metallica
 ('james_hetfield','james@metallica.com','demo123','James','Hetfield','Los Angeles'),
 ('lars_ulrich','lars@metallica.com','demo123','Lars','Ulrich','Los Angeles'),
 ('kirk_hammett','kirk@metallica.com','demo123','Kirk','Hammett','Los Angeles'),
 ('robert_trujillo','robert@metallica.com','demo123','Robert','Trujillo','Los Angeles');
 
--- Iron Maiden
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('bruce_dickinson','bruce@ironmaiden.com','demo123','Bruce','Dickinson','London'),
 ('steve_harris','steve@ironmaiden.com','demo123','Steve','Harris','London'),
 ('dave_murray','dave@ironmaiden.com','demo123','Dave','Murray','London');
 
--- Black Sabbath
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('ozzy_osbourne','ozzy@blacksabbath.com','demo123','Ozzy','Osbourne','Birmingham'),
 ('tony_iommi','tony@blacksabbath.com','demo123','Tony','Iommi','Birmingham'),
 ('geezer_butler','geezer@blacksabbath.com','demo123','Geezer','Butler','Birmingham');
 
--- Slayer
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('tom_araya','tom@slayer.net','demo123','Tom','Araya','Los Angeles'),
 ('kerry_king','kerry@slayer.net','demo123','Kerry','King','Los Angeles');
 
--- Slipknot
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('corey_taylor','corey@slipknot.com','demo123','Corey','Taylor','Des Moines'),
 ('mick_thomson','mick@slipknot.com','demo123','Mick','Thomson','Des Moines');
 
--- Nirvana
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('kurt_cobain','kurt@nirvana.com','demo123','Kurt','Cobain','Aberdeen'),
 ('dave_grohl','dave@nirvana.com','demo123','Dave','Grohl','Aberdeen');
 
--- Queen
 INSERT INTO users (username, email, password_hash, first_name, last_name, city)
 VALUES
 ('freddie_mercury','freddie@queen.com','demo123','Freddie','Mercury','London'),
 ('brian_may','brian@queen.com','demo123','Brian','May','London'),
 ('roger_taylor','roger@queen.com','demo123','Roger','Taylor','London');
-
--- ======================================================
--- Band members (famous lineups)
--- ======================================================
 
 INSERT INTO band_members (band_id, user_id, role)
 SELECT b.id, u.id, 'vocals'
@@ -816,8 +988,6 @@ SELECT b.id, u.id, 'bass'
 FROM bands b JOIN users u
 WHERE b.name='Metallica' AND u.username='robert_trujillo';
 
-
--- Iron Maiden
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u
@@ -833,8 +1003,6 @@ SELECT b.id, u.id, 'guitar'
 FROM bands b JOIN users u
 WHERE b.name='Iron Maiden' AND u.username='dave_murray';
 
-
--- Black Sabbath
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u
@@ -850,8 +1018,6 @@ SELECT b.id, u.id, 'bass'
 FROM bands b JOIN users u
 WHERE b.name='Black Sabbath' AND u.username='geezer_butler';
 
-
--- Slayer
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u
@@ -862,8 +1028,6 @@ SELECT b.id, u.id, 'guitar'
 FROM bands b JOIN users u
 WHERE b.name='Slayer' AND u.username='kerry_king';
 
-
--- Slipknot
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u
@@ -874,8 +1038,6 @@ SELECT b.id, u.id, 'guitar'
 FROM bands b JOIN users u
 WHERE b.name='Slipknot' AND u.username='mick_thomson';
 
-
--- Nirvana
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u
@@ -886,8 +1048,6 @@ SELECT b.id, u.id, 'drums'
 FROM bands b JOIN users u
 WHERE b.name='Nirvana' AND u.username='dave_grohl';
 
-
--- Queen
 INSERT INTO band_members
 SELECT b.id, u.id, 'vocals'
 FROM bands b JOIN users u

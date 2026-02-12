@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "lint": "tslint -c tslint.json src/**/*.ts",
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm run build",
     "dev": "nodemon --exec tsx ./src/server.ts",
     "clear-db": "tsx ./src/scripts/clearDatabase.ts"
   },
