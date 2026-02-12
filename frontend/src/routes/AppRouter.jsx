@@ -40,7 +40,6 @@ export default function AppRouter() {
         <Route path="/events" element={<EventFinderPage />} />
         <Route path="/bands/create" element={<EditBandPage />} />
         <Route path="/bands/manage/:id" element={<EditBandPage />} />
-        <Route path="/admin/moderation" element={<AdminModerationPage />} />
       </Route>
       {/* admin only */}
       <Route

@@ -6,21 +6,16 @@ export default function AdminRoute({ children }) {
   const { isAuth } = useAuth();
   const { user, loading } = useUser();
 
-  // still loading user
-  if (loading) {
-    return <p style={{ padding: 40 }}>Checking permissions...</p>;
-  }
+  if (loading) return <p style={{ padding: 40 }}>Checking permissions...</p>;
+  if (!isAuth) return <Navigate to="/login" replace />;
 
-  // not logged in
-  if (!isAuth) {
-    return <Navigate to="/login" replace />;
-  }
+  const isAdmin =
+    user?.is_admin === true ||
+    Number(user?.is_admin) === 1 ||
+    user?.isadmin === true ||
+    Number(user?.isadmin) === 1;
 
-  // not admin
-  if (!user || Number(user.isadmin) !== 1) {
-    return <Navigate to="/" replace />;
-  }
+  if (!isAdmin) return <Navigate to="/" replace />;
 
-  // allowed
   return children;
 }

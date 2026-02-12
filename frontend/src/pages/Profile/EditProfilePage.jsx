@@ -2,11 +2,12 @@ import "./EditProfileSettings.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useEditProfileSettings } from "../../hooks/useUser";
 import { useEffect, useMemo, useState } from "react";
-
+import ImageUploadField from "../../components/ImageUploadField";
+import { useAuth } from "../../context/AuthContext";
 import { getAllInstruments } from "../../services/InstrumentService";
 import { getAllGenres } from "../../services/GenreService";
 import { MultiSelectDropdown } from "../../components/MultiSelectDropdown"; // adjust path
-
+import { uploadUserProfileImage } from "../../services/UploadService";
 
 export default function EditProfileSettings() {
   // IMPORTANT:
@@ -21,16 +22,21 @@ export default function EditProfileSettings() {
     onChange,
     onSubmit,
   } = useEditProfileSettings();
-
+  const { userId } = useAuth();
   const [instrumentOptions, setInstrumentOptions] = useState([]);
   const [genreOptions, setGenreOptions] = useState([]);
   const [optionsError, setOptionsError] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(""); // store server URL after upload
 
   // Read token the same way your services expect it
   const token = useMemo(() => {
     // change this if you store token differently
     return localStorage.getItem("token") || "";
   }, []);
+
 
   const parseCsvIds = (value) =>
     String(value || "")
@@ -66,9 +72,6 @@ export default function EditProfileSettings() {
       const instruments = Array.isArray(instRes) ? instRes : instRes?.data ?? [];
       const genres = Array.isArray(genreRes) ? genreRes : genreRes?.data ?? [];
 
-      console.log("instRes type:", typeof instRes, instRes);
-      console.log("genreRes type:", typeof genreRes, genreRes);
-
       if (alive) {
         setInstrumentOptions(instruments);
         setGenreOptions(genres);
@@ -100,17 +103,48 @@ export default function EditProfileSettings() {
     return selectedGenreIds.map((id) => getLabelById(genreOptions, id)).join(", ");
   }, [selectedGenreIds, genreOptions]);
 
+  const idsToNames = (ids, options) =>
+  (ids || [])
+    .map((id) => options.find((o) => String(o.id) === String(id)))
+    .map((o) => o?.name ?? o?.title ?? o?.label)
+    .filter(Boolean);
 
+  const handleSubmit = (e) => {
+    const instrumentsNames = idsToNames(selectedInstrumentIds, instrumentOptions);
+    const stylesNames = idsToNames(selectedGenreIds, genreOptions);
+  
+    // 👉 extra mezők átadása a hooknak
+    return onSubmit(e, {
+      instruments: instrumentsNames,
+      styles: stylesNames,
+      description: (form.description ?? "").trim() || null,
+    });
+  };
+
+    const avatarStorageKey = useMemo(() => {
+  // stable key so it persists per user
+    return userId ? `bander:user:avatar:${userId}` : "bander:user:avatar:guest";
+  }, [userId]);
+  const storedAvatar = useMemo(() => {
+    try {
+      return avatarStorageKey ? localStorage.getItem(avatarStorageKey) : "";
+    } catch {
+      return "";
+    }
+  },   [avatarStorageKey]);
 
   if (loading) return <p style={{ padding: 40 }}>Loading profile...</p>;
   if (error) return <p style={{ padding: 40, color: "red" }}>{String(error?.message || error)}</p>;
-
 
   return (
     <div className="profile-settings-page">
       {/* Left Profile Card */}
       <div className="profile-card">
-        <img src={placeholder} alt="User avatar" className="profile-avatar" />
+        <img
+          src={avatarPreview || avatarUrl || form.profile_image_url || placeholder}
+          alt="User avatar"
+          className="profile-avatar"
+        />
         <h3 className="profile-username">{form.username || "UserName"}</h3>
 
         <p className="profile-label">Full Name</p>
@@ -135,7 +169,7 @@ export default function EditProfileSettings() {
       </div>
 
       {/* Right Edit Form */}
-      <form className="profile-form" onSubmit={onSubmit}>
+      <form className="profile-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <div className="form-group">
             <label>Name</label>
@@ -235,6 +269,36 @@ export default function EditProfileSettings() {
               value={form.birth_date}
               onChange={onChange("birth_date")}
               type="date"
+            />
+          </div>
+          <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+            <ImageUploadField
+              label="Profile picture"
+              initialUrl={form.profile_image_url || ""} // ✅ backend field
+              aspect="1 / 1"
+              helpText="Uploads to the server instantly."
+              onChange={async ({ file, previewUrl }) => {
+                setAvatarPreview(previewUrl);
+              
+                if (!file) {
+                  // optional: handle remove later with backend delete endpoint if you add one
+                  setAvatarUrl("");
+                  return;
+                }
+              
+                try {
+                  setUploadingAvatar(true);
+                
+                  const result = await uploadUserProfileImage(userId, file, token);
+                  setAvatarUrl(result.profile_image_url);
+                
+                } catch (err) {
+                  alert(err?.message || "Upload failed");
+                } finally {
+                  setUploadingAvatar(false);
+                }
+              }}
+
             />
           </div>
         </div>

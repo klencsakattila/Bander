@@ -8,6 +8,14 @@ function normalizeUser(data) {
   return data;
 }
 
+const toStr = (v) => (v === null || v === undefined ? "" : String(v));
+const toCsv = (v) => {
+  if (v === null || v === undefined) return "";
+  if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean).join(",");
+  return String(v);
+};
+
+
 export function useEditProfileSettings() {
   const { token, userId, isAuth } = useAuth();
 
@@ -104,52 +112,56 @@ export function useEditProfileSettings() {
     return (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-    setSuccess("");
+async function onSubmit(e, extra = {}) {
+  e.preventDefault();
+  setSaving(true);
+  setError("");
+  setSuccess("");
 
-    try {
-      if (!isAuth) throw new Error("Not logged in.");
-      if (!userId) throw new Error("Missing logged-in user id.");
+  try {
+    if (!isAuth) throw new Error("Not logged in.");
+    if (!userId) throw new Error("Missing logged-in user id.");
 
-      const payload = {
-        first_name: form.first_name?.trim() || null,
-        last_name: form.last_name?.trim() || null,
-        username: form.username?.trim() || null,
-        email: form.email?.trim() || null,
-        city: form.city?.trim() || null,
-        birth_date: form.birth_date || null,
-      };
+    const payload = {
+      first_name: (form.first_name ?? "").trim() || null,
+      last_name: (form.last_name ?? "").trim() || null,
+      username: (form.username ?? "").trim() || null,
+      email: (form.email ?? "").trim() || null,
+      city: (form.city ?? "").trim() || null,
+      birth_date: form.birth_date || null,
 
-      if (form.password && form.password.trim().length > 0) {
-        payload.password_hash = form.password.trim(); // backend ezt várja
-      }
+      // 👇 ide jönnek a tömbök (instruments/styles) kívülről
+      ...extra,
+    };
 
-      const updated = await updateUser(userId, payload, token);
-      setUser(updated);
-
-      const birth = updated?.birth_date ? String(updated.birth_date).slice(0, 10) : "";
-
-      setForm((p) => ({
-        ...p,
-        first_name: updated.first_name ?? "",
-        last_name: updated.last_name ?? "",
-        username: updated.username ?? "",
-        email: updated.email ?? "",
-        city: updated.city ?? "",
-        birth_date: birth,
-        password: "",
-      }));
-
-      setSuccess("Profile updated successfully.");
-    } catch (e2) {
-      setError(e2?.message || "Failed to update user");
-    } finally {
-      setSaving(false);
+    if (form.password && String(form.password).trim().length > 0) {
+      payload.password_hash = String(form.password).trim();
     }
+
+    const updated = await updateUser(userId, payload, token);
+    setUser(updated);
+
+    const birth = updated?.birth_date ? String(updated.birth_date).slice(0, 10) : "";
+
+    setForm((p) => ({
+      ...p,
+      first_name: updated.first_name ?? "",
+      last_name: updated.last_name ?? "",
+      username: updated.username ?? "",
+      email: updated.email ?? "",
+      city: updated.city ?? "",
+      birth_date: birth,
+      password: "",
+      // UI mezők maradnak a form-ban, nem erőltetjük rá a backend shape-et
+    }));
+
+    setSuccess("Profile updated successfully.");
+  } catch (e2) {
+    setError(e2?.message || "Failed to update user");
+  } finally {
+    setSaving(false);
   }
+}
 
   return {
     token,

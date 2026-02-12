@@ -18,6 +18,7 @@ function getBandIdFromUser(u) {
 export default function Navbar() {
   const { isAuth, logout, token, userId } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [bandId, setBandId] = useState(null);
 
@@ -28,15 +29,27 @@ export default function Navbar() {
       try {
         if (!isAuth || !userId) {
           setBandId(null);
+          setIsAdmin(false);
           return;
         }
 
         const me = await getUserById(userId, token);
         const row = Array.isArray(me) ? me[0] : me;
+        const admin =
+            row?.is_admin === true ||
+            Number(row?.is_admin) === 1 ||
+            row?.isadmin === true ||
+            Number(row?.isadmin) === 1;
+
+          if (!cancelled) {
+            setBandId(bId ? Number(bId) : null);
+            setIsAdmin(!!admin);
+        }
+
         const bId = row ? getBandIdFromUser(row) : null;
 
         if (!cancelled) setBandId(bId ? Number(bId) : null);
-      } catch {
+      } catch (err) {
         if (!cancelled) setBandId(null);
       }
     }
@@ -98,6 +111,7 @@ export default function Navbar() {
               </button>
             </>
           )}
+          {isAuth && isAdmin && <Link to="/admin/moderation">Admin</Link>}
         </div>
       </div>
     </nav>
