@@ -1,4 +1,4 @@
--- Active: 1769172688017@@localhost@3306
+-- Active: 1770381984070@@localhost@3306@bander
 -- ======================================================
 -- Database Setup
 -- ======================================================
@@ -23,7 +23,7 @@ CREATE TABLE users (
     city VARCHAR(50),
     birth_date DATE,
     profile_image_url VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 );
 
 CREATE TABLE bands (
@@ -32,7 +32,9 @@ CREATE TABLE bands (
     city VARCHAR(50),
     profile_image_url VARCHAR(255) NULL,
     banner_image_url VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    profile_image_url VARCHAR(255) NULL,
+    banner_image_url VARCHAR(255) NULL
 );
 
 CREATE TABLE band_members (
@@ -203,6 +205,7 @@ ALTER TABLE users AUTO_INCREMENT = 1;
 -- ======================================================
 -- Seed Data: Base
 -- ======================================================
+USE bander;
 INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date) VALUES
 ('alice','alice@example.com','demo123','Alice','Smith','Budapest','1990-05-14'),
 ('bob','bob@example.com','demo123','Bob','Jones','Debrecen','1988-11-02'),

@@ -6,7 +6,7 @@ import { toPublicUrl } from "../../middleware/upload";
 export async function getBandsLimit(req: Request, res: Response) {
     const limitParam = parseInt((req.params.limit || req.query.limit || '10') as string);
     const limit = isNaN(limitParam) ? 10 : Math.min(20, Math.max(1, limitParam));
-    const offsetParam = parseInt((req.query.offset || '0') as string);
+    const offsetParam = parseInt((req.params.offset || req.query.offset || '0') as string);
     const offset = isNaN(offsetParam) ? 0 : Math.max(0, offsetParam);
 
     const connection = await mysql.createConnection(config.database);
