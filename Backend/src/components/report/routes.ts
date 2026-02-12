@@ -4,7 +4,7 @@ import { verifyToken, ensureAdmin } from "../../middleware/auth";
 
 const router: Router = Router();
 
-router.get("/", verifyToken, ensureAdmin, getAllReport);
+router.get("/", verifyToken, getAllReport);
 router.get("/:id", getReportById);
 router.post("/", createReport);
 router.delete("/:id", deleteReport);
