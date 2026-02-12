@@ -1,5 +1,10 @@
 import { apiFetch } from "./apiClient";
 
+// GET /reports
+export function getReports(token) {
+  return apiFetch(`/reports`, { token });
+}
+
 // GET /reports/:id
 export function getReportById(id, token) {
   if (!id) throw new Error("id is required");
@@ -7,9 +12,14 @@ export function getReportById(id, token) {
 }
 
 // POST /reports
-// body: { reporter_id, reported_user_id?, reported_band_id?, reported_post_id?, report_message }
 export function createReport(
-  { reporter_id, reported_user_id = null, reported_band_id = null, reported_post_id = null, report_message },
+  {
+    reporter_id,
+    reported_user_id = null,
+    reported_band_id = null,
+    reported_post_id = null,
+    report_message,
+  },
   token
 ) {
   if (!reporter_id) throw new Error("reporter_id is required");
@@ -17,8 +27,14 @@ export function createReport(
 
   return apiFetch(`/reports`, {
     method: "POST",
-    body: { reporter_id, reported_user_id, reported_band_id, reported_post_id, report_message },
-    token, // backend doesn't require token for createReport, but sending is fine
+    body: {
+      reporter_id,
+      reported_user_id,
+      reported_band_id,
+      reported_post_id,
+      report_message,
+    },
+    token,
   });
 }
 
@@ -40,6 +56,33 @@ export function updateReportStatus(id, report_status, token) {
   return apiFetch(`/reports/${id}`, {
     method: "PATCH",
     body: { report_status },
+    token,
+  });
+}
+
+// DELETE user (admin)
+export function deleteUserById(userId, token) {
+  if (!userId) throw new Error("userId is required");
+  return apiFetch(`/users/${userId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+// DELETE /bands/:id
+export function deleteBandById(bandId, token) {
+  if (!bandId) throw new Error("bandId is required");
+  return apiFetch(`/bands/${bandId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+// DELETE /events/:id
+export function deleteEventById(eventId, token) {
+  if (!eventId) throw new Error("eventId is required");
+  return apiFetch(`/bands/post/${eventId}`, {
+    method: "DELETE",
     token,
   });
 }

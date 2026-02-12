@@ -7,6 +7,7 @@ import { getBandById, getLatestBandPosts } from "../../services/BandService";
 import { useAuth } from "../../context/AuthContext";
 import { formatISODate } from "../../utils/date";
 import { useLoadById } from "../../hooks/useLoadById";
+import { pickMedia } from "../../utils/mediaUrl";
 
 const toList = (v) => {
   if (!v) return [];
@@ -103,32 +104,64 @@ export default function BandProfilePage() {
 
   return (
     <div className="band-profile-page">
-      <div className="band-header">
+      <div
+        className="band-header"
+        style={{
+            backgroundImage: `url(${
+      pickMedia(band, [
+        "banner_image_url", // ✅ your backend field
+        "bannerUrl",
+        "banner_url",
+        "banner_img",
+        "banner_image",
+        "cover",
+        "cover_url",
+      ]) || ""
+            })`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+        }}
+      >
         <h1>{bandTitle}</h1>
       </div>
 
       <div className="band-top">
         <div className="band-info-card">
-          <img src={placeholder} alt={bandTitle} />
+          <img
+            src={
+              pickMedia(band, [
+                "profile_image_url",   // ✅ your backend field
+                "avatar_url",
+                "avatarUrl",
+                "profile_img",
+                "profile_image",
+                "image",
+                "img",
+              ]) || placeholder
+            }
+            alt={bandTitle}
+          />
+
 
           <div className="band-info-text">
             <h3>{bandTitle}</h3>
             <p>{bandCity}</p>
 
-            <p>
-              Instrument(s): {bandInstruments.length ? bandInstruments.join(", ") : "—"}
-            </p>
-            <p>Genre(s): {styles.length ? styles.join(", ") : "—"}</p>
-
             <p>Open spots: —</p>
           </div>
         </div>
-
         <div className="band-apply">
-          <h4>Application for a role</h4>
-          <input type="text" placeholder="Name" />
-          <input type="text" placeholder="Instrument(s)" />
-          <button>Send Application</button>
+          <h4>Csatlakozás a zenekarhoz</h4>
+                  
+          <p>
+            Ha szeretnél csatlakozni a zenekarhoz, vedd fel a kapcsolatot
+            az egyik jelenlegi taggal a fenti taglistából.
+          </p>
+                  
+          <p className="muted">
+            Kattints a profiljukra és írj nekik üzenetet.
+          </p>
         </div>
       </div>
 

@@ -20,55 +20,81 @@ export default function LoginPage() {
     const password = e.target.password.value.trim();
 
     const newErrors = { email: "", password: "", general: "" };
-
     if (!email) newErrors.email = "Email is required";
     if (!password) newErrors.password = "Password is required";
 
     setErrors(newErrors);
-
-    // stop if validation failed
     if (newErrors.email || newErrors.password) return;
 
     try {
       setLoading(true);
+
       const res = await loginUser({ email, password });
 
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        setErrors((prev) => ({
-          ...prev,
-          general: msg || "Invalid email or password",
-        }));
-        return;
-      }
+      // ✅ 1) FETCH Response eset
+      const isFetchResponse =
+        res &&
+        typeof res === "object" &&
+        typeof res.ok === "boolean" &&
+        typeof res.headers?.get === "function" &&
+        typeof res.json === "function";
 
-      const contentType = res.headers.get("content-type") || "";
-      let data;
+      let data = null;
+      let status = 200;
 
-      if (contentType.includes("application/json")) {
-        data = await res.json();
+      if (isFetchResponse) {
+        status = res.status;
+
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          setErrors((prev) => ({
+            ...prev,
+            general: msg || "Invalid email or password",
+          }));
+          return;
+        }
+
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text().catch(() => "");
+          throw new Error(text || "Login failed");
+        }
       } else {
-        const text = await res.text();
-        // show backend message if it returned plain text
-        throw new Error(text || "Login failed");
-      }
-      console.log("LOGIN STATUS:", res.status);
+        // ✅ 2) AXIOS / sima objektum eset
+        // Axios: { data, status, ... }
+        if (res?.data !== undefined) {
+          data = res.data;
+          status = res.status ?? 200;
+        } else {
+          // plain object
+          data = res;
+          status = res?.status ?? 200;
+        }
 
-      const token =
-        data?.token ||
-        data?.access_token ||
-        data?.jwt;
-
-      if (!token || typeof token !== "string") {
-        console.log("Login response (no token):", data);
-        throw new Error("Login succeeded but token is missing in response");
+        // ha a backend hibát dobott és te azt ide felkapod "success" helyett,
+        // akkor itt is tudsz alap validációt csinálni:
+        if (data?.error || data?.message === "Invalid credentials") {
+          setErrors((prev) => ({
+            ...prev,
+            general: data?.message || data?.error || "Invalid email or password",
+          }));
+          return;
+        }
       }
+
+      console.log("LOGIN STATUS:", status);
       console.log("LOGIN DATA:", data);
 
+      const token = data?.token || data?.access_token || data?.jwt;
+
+      if (!token || typeof token !== "string") {
+        throw new Error("Login succeeded but token is missing in response");
+      }
 
       login(token);
       navigate("/", { replace: true });
-
     } catch (err) {
       setErrors((prev) => ({
         ...prev,
@@ -84,10 +110,8 @@ export default function LoginPage() {
       <form className="login-box animate" onSubmit={handleSubmit}>
         <h2>Log in with email</h2>
 
-        {/* general error */}
         {errors.general && <p className="error-text">{errors.general}</p>}
 
-        {/* EMAIL */}
         <div className="input-group">
           <input
             name="email"
@@ -98,7 +122,6 @@ export default function LoginPage() {
           {errors.email && <p className="error-text">{errors.email}</p>}
         </div>
 
-        {/* PASSWORD */}
         <div className="input-group password-group">
           <input
             name="password"

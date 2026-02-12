@@ -15,11 +15,23 @@ function getBandIdFromUser(u) {
   );
 }
 
+function isTruthyAdmin(row) {
+  // kezeld le a tipikus backend mezőneveket
+  const v =
+    row?.is_admin ??
+    row?.isAdmin ??
+    row?.isadmin ??
+    row?.admin ??
+    row?.role; // ha esetleg role = 'admin'
+  if (typeof v === "string") return v === "1" || v.toLowerCase() === "true" || v.toLowerCase() === "admin";
+  return v === true || Number(v) === 1;
+}
+
 export default function Navbar() {
   const { isAuth, logout, token, userId } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
 
+  const [isAdmin, setIsAdmin] = useState(false);
   const [bandId, setBandId] = useState(null);
 
   useEffect(() => {
@@ -28,29 +40,28 @@ export default function Navbar() {
     async function loadMe() {
       try {
         if (!isAuth || !userId) {
-          setBandId(null);
-          setIsAdmin(false);
+          if (!cancelled) {
+            setBandId(null);
+            setIsAdmin(false);
+          }
           return;
         }
 
         const me = await getUserById(userId, token);
         const row = Array.isArray(me) ? me[0] : me;
-        const admin =
-            row?.is_admin === true ||
-            Number(row?.is_admin) === 1 ||
-            row?.isadmin === true ||
-            Number(row?.isadmin) === 1;
-
-          if (!cancelled) {
-            setBandId(bId ? Number(bId) : null);
-            setIsAdmin(!!admin);
-        }
 
         const bId = row ? getBandIdFromUser(row) : null;
+        const admin = row ? isTruthyAdmin(row) : false;
 
-        if (!cancelled) setBandId(bId ? Number(bId) : null);
+        if (!cancelled) {
+          setBandId(bId ? Number(bId) : null);
+          setIsAdmin(!!admin);
+        }
       } catch (err) {
-        if (!cancelled) setBandId(null);
+        if (!cancelled) {
+          setBandId(null);
+          setIsAdmin(false);
+        }
       }
     }
 
@@ -60,9 +71,6 @@ export default function Navbar() {
     };
   }, [isAuth, userId, token]);
 
-  // ✅ THIS decides what happens when user clicks "Create band"
-  // If they already have a band -> go to edit page
-  // If not -> go to create page
   const bandManageTo = useMemo(() => {
     if (!isAuth) return null;
     return bandId ? `/bands/manage/${bandId}` : `/bands/create`;
@@ -86,9 +94,7 @@ export default function Navbar() {
           <Link to="/bands">Bands</Link>
           <Link to="/artists">Artists</Link>
           <Link to="/events">Events</Link>
-
-          {/* ✅ If logged in, show Create/Manage band, but route depends on bandId */}
-          {isAuth && <Link to={bandManageTo}>{bandManageLabel}</Link>}
+          {isAuth && bandManageTo && <Link to={bandManageTo}>{bandManageLabel}</Link>}
         </div>
 
         <div className="navbar-actions">
@@ -111,7 +117,13 @@ export default function Navbar() {
               </button>
             </>
           )}
-          {isAuth && isAdmin && <Link to="/admin/moderation">Admin</Link>}
+
+          {/* ✅ Admin link */}
+          {isAuth && isAdmin && (
+            <Link to="/admin" className="nav-btn nav-btn-outline">
+              Admin
+            </Link>
+          )}
         </div>
       </div>
     </nav>

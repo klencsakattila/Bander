@@ -141,3 +141,160 @@
     max-width: 100%;
   }
 }
+.band-banner-wrap {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.band-banner {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.band-banner--empty {
+  height: 140px;
+  background: rgba(255,255,255,0.08);
+}
+
+.band-upload-box {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.band-forms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .band-forms {
+    grid-template-columns: 1fr;
+  }
+}
+.band-media {
+  display: grid;
+  gap: 18px;
+}
+
+.band-media-block {
+  display: grid;
+  gap: 10px;
+}
+
+.band-media-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.band-banner-picker {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.35);
+}
+
+.band-banner-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.band-banner-empty {
+  height: 120px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 4px;
+  color: rgba(0,0,0,0.7);
+}
+
+.band-banner-empty-title {
+  font-weight: 800;
+}
+
+.band-banner-empty-sub {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.band-banner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0));
+}
+
+.band-avatar-picker {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.35);
+}
+
+.band-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* the "Choose file" pill */
+.band-overlay-btn {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.band-media-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.band-file-name {
+  font-size: 12px;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.band-media-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.18);
+  color: rgba(0,0,0,0.75);
+}
+
+.btn.ghost:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+/* Force-hide native file input everywhere in the band image area */
+.band-media input[type="file"].band-file-hidden {
+  display: none !important;
+}

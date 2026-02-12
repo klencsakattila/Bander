@@ -82,3 +82,31 @@ export async function createBandPost(
   });
 }
   
+
+export function uploadBandAvatar(bandId, file, token) {
+  if (!bandId) throw new Error("bandId is required");
+  if (!file) throw new Error("file is required");
+
+  const fd = new FormData();
+  fd.append("file", file); // keep "image" if backend expects it
+
+  return apiFetch(`/bands/${bandId}/profile-image`, {
+    method: "POST",
+    body: fd,
+    token,
+  });
+}
+
+export function uploadBandBanner(bandId, file, token) {
+  if (!bandId) throw new Error("bandId is required");
+  if (!file) throw new Error("file is required");
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  return apiFetch(`/bands/${bandId}/banner-image`, {
+    method: "POST",
+    body: fd,
+    token,
+  });
+}

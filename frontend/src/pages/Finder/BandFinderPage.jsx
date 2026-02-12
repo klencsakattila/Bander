@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getBandsLimit } from "../../services/BandService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { band as bandG } from "../../utils/fieldGetters";
+import { pickMedia } from "../../utils/mediaUrl";
 
 const PAGE_SIZE = 10;
 
@@ -136,7 +137,21 @@ export default function BandFinderPage() {
                 to={`/band/${bandG.id(b)}`}
                 className="band-card"
               >
-                <img src={placeholder} alt={bandG.name(b)} />
+                <img
+                  src={
+                    pickMedia(b, [
+                      "profile_image_url",   // your real DB field
+                      "avatar_url",
+                      "avatarUrl",
+                      "profile_image",
+                      "profile_img",
+                      "image",
+                      "img",
+                    ]) || placeholder
+                  }
+                  alt={bandG.name(b)}
+                />
+
                 <h4>{bandG.name(b)}</h4>
                 <p className="muted">Location: {bandG.city(b)}</p>
               </Link>

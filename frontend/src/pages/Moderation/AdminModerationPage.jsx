@@ -1,21 +1,74 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AdminModerationPage.css";
-
-// OPTIONAL: swap to your actual services
-// import { getReports, resolveReport, banUser, banBand, deletePost, getAdminStats } from "../../services/ModerationService";
 import { useAuth } from "../../context/AuthContext";
+import {
+  getReports,
+  updateReportStatus,
+  deleteReport,
+  deleteUserById,
+  deleteBandById,
+  deleteEventById,
+} from "../../services/ModerationService";
 
 const TABS = {
   QUEUE: "queue",
   ACTIONS: "actions",
 };
 
+function normalizeReportsPayload(payload) {
+  // supports multiple backend shapes:
+  // 1) [ ... ]
+  // 2) { reports: [ ... ] }
+  // 3) { data: [ ... ] }
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.reports)) return payload.reports;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+}
+
+function mapReport(r) {
+  const id = r?.id ?? r?.report_id ?? r?.reportId;
+
+  const status = r?.report_status ?? r?.status ?? "open";
+
+  const createdAt = r?.createdAt ?? r?.created_at ?? r?.created ?? null;
+
+  const subject =
+    r?.subject ??
+    r?.report_message ??
+    r?.message ??
+    (r?.reported_post_id
+      ? "Post"
+      : r?.reported_band_id
+      ? "Band"
+      : r?.reported_user_id
+      ? "User"
+      : "Report");
+
+  const name =
+    r?.reporter_name ??
+    r?.reporterUsername ??
+    r?.reporter_username ??
+    r?.reporter?.username ??
+    r?.reporter?.name ??
+    r?.name ??
+    "—";
+
+  return {
+    raw: r,
+    id,
+    status,
+    createdAt,
+    subject,
+    name,
+  };
+}
+
 export default function AdminModerationPage() {
   const { token } = useAuth();
 
   const [tab, setTab] = useState(TABS.QUEUE);
 
-  // Stats
   const [stats, setStats] = useState({
     users: 0,
     bands: 0,
@@ -30,7 +83,7 @@ export default function AdminModerationPage() {
 
   // Filters
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all"); // all | pending | resolved | rejected
+  const [status, setStatus] = useState("all"); // all | open | reviewing | resolved
 
   // Manual actions
   const [banUserId, setBanUserId] = useState("");
@@ -39,10 +92,9 @@ export default function AdminModerationPage() {
   const [banBandId, setBanBandId] = useState("");
   const [banBandReason, setBanBandReason] = useState("");
 
-  const [deletePostId, setDeletePostId] = useState("");
-  const [deletePostReason, setDeletePostReason] = useState("");
+  const [deleteEventId, setDeleteEventId] = useState("");
+  const [deleteEventReason, setDeleteEventReason] = useState("");
 
-  // Mock data (replace with real API)
   useEffect(() => {
     let alive = true;
 
@@ -51,23 +103,18 @@ export default function AdminModerationPage() {
         setLoading(true);
         setError("");
 
-        // Replace these with real API calls:
-        // const s = await getAdminStats(token);
-        // const r = await getReports(token);
+        if (!token) throw new Error("Missing token (admin auth required)");
 
-        const s = { users: 1200, bands: 120, reports: 20, events: 200 };
-
-        const r = [
-          { id: 1, name: "Kiss Pista", subject: "Band name", status: "pending", createdAt: "2026-02-10" },
-          { id: 2, name: "Zsíros B. Ödön", subject: "Event", status: "resolved", createdAt: "2026-02-08" },
-          { id: 3, name: "Kovács Péter", subject: "User harassment", status: "pending", createdAt: "2026-02-09" },
-          { id: 4, name: "James Hathefield", subject: "Language", status: "pending", createdAt: "2026-02-07" },
-          { id: 5, name: "Till Lindemann", subject: "Referral link", status: "pending", createdAt: "2026-02-06" },
-        ];
+        const payload = await getReports(token);
+        const list = normalizeReportsPayload(payload).map(mapReport);
 
         if (!alive) return;
-        setStats(s);
-        setReports(r);
+
+        setReports(list);
+        setStats((prev) => ({
+          ...prev,
+          reports: list.length,
+        }));
       } catch (e) {
         if (!alive) return;
         setError(String(e?.message || "Failed to load moderation data"));
@@ -84,10 +131,11 @@ export default function AdminModerationPage() {
 
   const filteredReports = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     return reports.filter((r) => {
       const matchesQ =
         !q ||
-        String(r.id).includes(q) ||
+        String(r.id ?? "").includes(q) ||
         (r.name || "").toLowerCase().includes(q) ||
         (r.subject || "").toLowerCase().includes(q);
 
@@ -98,7 +146,7 @@ export default function AdminModerationPage() {
 
   async function handleResolve(reportId) {
     try {
-      // await resolveReport(reportId, token);
+      await updateReportStatus(reportId, "resolved", token);
       setReports((prev) =>
         prev.map((r) => (r.id === reportId ? { ...r, status: "resolved" } : r))
       );
@@ -107,53 +155,67 @@ export default function AdminModerationPage() {
     }
   }
 
-  async function handleReject(reportId) {
+  async function handleMarkReviewing(reportId) {
     try {
-      // await rejectReport(reportId, token);
+      await updateReportStatus(reportId, "reviewing", token);
       setReports((prev) =>
-        prev.map((r) => (r.id === reportId ? { ...r, status: "rejected" } : r))
+        prev.map((r) => (r.id === reportId ? { ...r, status: "reviewing" } : r))
       );
     } catch (e) {
-      alert(String(e?.message || "Failed to reject report"));
+      alert(String(e?.message || "Failed to update report status"));
+    }
+  }
+
+  async function handleReject(reportId) {
+    // backend doesn't support "rejected" status -> reject = delete
+    try {
+      await deleteReport(reportId, token);
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      setStats((prev) => ({ ...prev, reports: Math.max(0, prev.reports - 1) }));
+    } catch (e) {
+      alert(String(e?.message || "Failed to reject/delete report"));
     }
   }
 
   async function submitBanUser(e) {
     e.preventDefault();
     if (!banUserId) return alert("UserID is required");
+
     try {
-      // await banUser(banUserId, { reason: banUserReason }, token);
-      alert(`User ${banUserId} banned (demo)`);
+      await deleteUserById(banUserId, token);
+      alert(`User ${banUserId} deleted`);
       setBanUserId("");
       setBanUserReason("");
-    } catch (e2) {
-      alert(String(e2?.message || "Failed to ban user"));
+    } catch (err) {
+      alert(String(err?.message || "Failed to delete user"));
     }
   }
 
   async function submitBanBand(e) {
     e.preventDefault();
     if (!banBandId) return alert("BandID is required");
+
     try {
-      // await banBand(banBandId, { reason: banBandReason }, token);
-      alert(`Band ${banBandId} banned (demo)`);
+      await deleteBandById(banBandId, token);
+      alert(`Band ${banBandId} deleted`);
       setBanBandId("");
       setBanBandReason("");
-    } catch (e2) {
-      alert(String(e2?.message || "Failed to ban band"));
+    } catch (err) {
+      alert(String(err?.message || "Failed to delete band"));
     }
   }
 
-  async function submitDeletePost(e) {
+  async function submitDeleteEvent(e) {
     e.preventDefault();
-    if (!deletePostId) return alert("PostID is required");
+    if (!deleteEventId) return alert("EventID is required");
+
     try {
-      // await deletePost(deletePostId, { reason: deletePostReason }, token);
-      alert(`Post ${deletePostId} deleted (demo)`);
-      setDeletePostId("");
-      setDeletePostReason("");
-    } catch (e2) {
-      alert(String(e2?.message || "Failed to delete post"));
+      await deleteEventById(deleteEventId, token);
+      alert(`Event ${deleteEventId} deleted`);
+      setDeleteEventId("");
+      setDeleteEventReason("");
+    } catch (err) {
+      alert(String(err?.message || "Failed to delete event"));
     }
   }
 
@@ -197,7 +259,9 @@ export default function AdminModerationPage() {
         <header className="adm-header">
           <div>
             <h1 className="adm-h1">Moderation Overview</h1>
-            <p className="adm-p">Review reports, resolve issues, and run manual actions.</p>
+            <p className="adm-p">
+              Review reports, resolve issues, and run manual actions.
+            </p>
           </div>
 
           <div className="adm-header-actions">
@@ -234,13 +298,15 @@ export default function AdminModerationPage() {
           </button>
         </section>
 
-        {/* Content */}
+        {/* Queue */}
         {tab === TABS.QUEUE && (
           <section className="adm-card">
             <div className="adm-card-head">
               <div>
                 <h2 className="adm-h2">Reports</h2>
-                <p className="adm-muted">Search, filter, and handle moderation reports.</p>
+                <p className="adm-muted">
+                  Search, filter, and handle moderation reports.
+                </p>
               </div>
 
               <div className="adm-filters">
@@ -256,9 +322,9 @@ export default function AdminModerationPage() {
                   onChange={(e) => setStatus(e.target.value)}
                 >
                   <option value="all">All statuses</option>
-                  <option value="pending">Pending</option>
+                  <option value="open">Open</option>
+                  <option value="reviewing">Reviewing</option>
                   <option value="resolved">Resolved</option>
-                  <option value="rejected">Rejected</option>
                 </select>
               </div>
             </div>
@@ -272,7 +338,7 @@ export default function AdminModerationPage() {
                   <thead>
                     <tr>
                       <th>ID</th>
-                      <th>Name</th>
+                      <th>Reporter</th>
                       <th>Subject</th>
                       <th>Date</th>
                       <th>Status</th>
@@ -294,7 +360,15 @@ export default function AdminModerationPage() {
                             <button
                               type="button"
                               className="adm-btn adm-btn-small"
-                              disabled={r.status !== "pending"}
+                              disabled={r.status === "resolved"}
+                              onClick={() => handleMarkReviewing(r.id)}
+                            >
+                              Reviewing
+                            </button>
+                            <button
+                              type="button"
+                              className="adm-btn adm-btn-small"
+                              disabled={r.status === "resolved"}
                               onClick={() => handleResolve(r.id)}
                             >
                               Resolve
@@ -302,10 +376,9 @@ export default function AdminModerationPage() {
                             <button
                               type="button"
                               className="adm-btn adm-btn-ghost adm-btn-small"
-                              disabled={r.status !== "pending"}
                               onClick={() => handleReject(r.id)}
                             >
-                              Reject
+                              Reject (delete)
                             </button>
                           </div>
                         </td>
@@ -326,13 +399,15 @@ export default function AdminModerationPage() {
           </section>
         )}
 
+        {/* Manual Actions */}
         {tab === TABS.ACTIONS && (
           <section className="adm-actions-grid">
+            {/* Ban User */}
             <div className="adm-card">
               <div className="adm-card-head">
                 <div>
                   <h2 className="adm-h2">Ban User</h2>
-                  <p className="adm-muted">Disable a user account by ID.</p>
+                  <p className="adm-muted">Delete a user account by ID.</p>
                 </div>
               </div>
 
@@ -364,11 +439,12 @@ export default function AdminModerationPage() {
               </form>
             </div>
 
+            {/* Ban Band */}
             <div className="adm-card">
               <div className="adm-card-head">
                 <div>
                   <h2 className="adm-h2">Ban Band</h2>
-                  <p className="adm-muted">Disable a band profile by ID.</p>
+                  <p className="adm-muted">Delete a band profile by ID.</p>
                 </div>
               </div>
 
@@ -400,22 +476,23 @@ export default function AdminModerationPage() {
               </form>
             </div>
 
+            {/* Delete Event */}
             <div className="adm-card">
               <div className="adm-card-head">
                 <div>
-                  <h2 className="adm-h2">Delete Post</h2>
-                  <p className="adm-muted">Remove content by PostID.</p>
+                  <h2 className="adm-h2">Delete Event</h2>
+                  <p className="adm-muted">Remove an event by EventID.</p>
                 </div>
               </div>
 
-              <form className="adm-form" onSubmit={submitDeletePost}>
+              <form className="adm-form" onSubmit={submitDeleteEvent}>
                 <div className="adm-form-row">
                   <div className="adm-form-group">
-                    <label>PostID</label>
+                    <label>EventID</label>
                     <input
                       className="adm-input"
-                      value={deletePostId}
-                      onChange={(e) => setDeletePostId(e.target.value)}
+                      value={deleteEventId}
+                      onChange={(e) => setDeleteEventId(e.target.value)}
                       placeholder="e.g. 999"
                     />
                   </div>
@@ -423,15 +500,15 @@ export default function AdminModerationPage() {
                     <label>Reason</label>
                     <input
                       className="adm-input"
-                      value={deletePostReason}
-                      onChange={(e) => setDeletePostReason(e.target.value)}
+                      value={deleteEventReason}
+                      onChange={(e) => setDeleteEventReason(e.target.value)}
                       placeholder="optional"
                     />
                   </div>
                 </div>
 
                 <button className="adm-btn" type="submit">
-                  Delete Post
+                  Delete Event
                 </button>
               </form>
             </div>
@@ -455,13 +532,16 @@ function StatusPill({ status }) {
   const cls =
     status === "resolved"
       ? "is-green"
-      : status === "rejected"
-      ? "is-gray"
-      : "is-amber";
+      : status === "reviewing"
+      ? "is-amber"
+      : "is-gray";
 
   const text =
-    status === "resolved" ? "Resolved" : status === "rejected" ? "Rejected" : "Pending";
+    status === "resolved"
+      ? "Resolved"
+      : status === "reviewing"
+      ? "Reviewing"
+      : "Open";
 
   return <span className={`adm-pill ${cls}`}>{text}</span>;
 }
-    
