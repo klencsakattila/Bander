@@ -8,17 +8,35 @@ import { useAuth } from "../../context/AuthContext";
 import { formatISODate } from "../../utils/date";
 import { useLoadById } from "../../hooks/useLoadById";
 
+const toList = (v) => {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.filter(Boolean).map(String);
+  if (typeof v === "string")
+    return v
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  return [String(v)];
+};
+
 export default function BandProfilePage() {
   const { id } = useParams();
   const bandIdNum = Number(id);
   const { token } = useAuth();
 
-  // ✅ Band load is now handled by hook
-  const { data: band, loading, error } = useLoadById(id, getBandById);
-
+  const { data: rawBand, loading, error } = useLoadById(id, getBandById);
   const [posts, setPosts] = useState([]);
 
-  // demo fallback posts (depends on band name/id)
+  // ✅ Normalize band shape in case API/hook wraps it
+  // supports: band, {band}, {data: band}, [band]
+  const band = useMemo(() => {
+    if (!rawBand) return null;
+    if (Array.isArray(rawBand)) return rawBand[0] ?? null;
+    if (rawBand.band) return rawBand.band;
+    if (rawBand.data) return rawBand.data;
+    return rawBand;
+  }, [rawBand]);
+
   const demoBandPosts = useMemo(() => {
     const bandName = band?.bandName ?? band?.name ?? band?.band_name ?? "Band";
     return [
@@ -27,7 +45,8 @@ export default function BandProfilePage() {
         band_id: bandIdNum,
         band_name: bandName,
         post_type: "announcement",
-        post_message: "🎤 New gig coming soon! Follow us for the exact date + venue details.",
+        post_message:
+          "🎤 New gig coming soon! Follow us for the exact date + venue details.",
         created_at: new Date().toISOString(),
       },
       {
@@ -52,14 +71,12 @@ export default function BandProfilePage() {
 
         const onlyThisBand = list.filter((p) => Number(p?.band_id) === bandIdNum);
         setPosts(onlyThisBand.length ? onlyThisBand : demoBandPosts);
-      } catch (e) {
+      } catch {
         if (!cancelled) setPosts(demoBandPosts);
       }
     }
 
-    // only load posts once we have a valid band id
     if (Number.isFinite(bandIdNum)) loadPosts();
-
     return () => {
       cancelled = true;
     };
@@ -72,60 +89,74 @@ export default function BandProfilePage() {
   const bandTitle = band.bandName ?? band.name ?? band.band_name ?? "Band";
   const bandCity = band.bandLocation ?? band.city ?? band.location ?? "";
 
+  const members = Array.isArray(band.members) ? band.members : [];
+  const styles = Array.isArray(band.styles) ? band.styles : [];
+
+  const bandInstruments = Array.from(
+    new Set(
+      members
+        .flatMap((m) => toList(m?.instruments))
+        .filter(Boolean)
+        .map(String)
+    )
+  );
+
   return (
     <div className="band-profile-page">
-      {/* Header */}
       <div className="band-header">
         <h1>{bandTitle}</h1>
       </div>
 
-      {/* Top section */}
       <div className="band-top">
-        {/* Band info */}
         <div className="band-info-card">
           <img src={placeholder} alt={bandTitle} />
 
           <div className="band-info-text">
             <h3>{bandTitle}</h3>
             <p>{bandCity}</p>
-            <p>Instrument(s): —</p>
-            <p>Genre(s): —</p>
+
+            <p>
+              Instrument(s): {bandInstruments.length ? bandInstruments.join(", ") : "—"}
+            </p>
+            <p>Genre(s): {styles.length ? styles.join(", ") : "—"}</p>
+
             <p>Open spots: —</p>
           </div>
         </div>
 
-        {/* Application */}
         <div className="band-apply">
           <h4>Application for a role</h4>
-
           <input type="text" placeholder="Name" />
           <input type="text" placeholder="Instrument(s)" />
-
           <button>Send Application</button>
         </div>
       </div>
 
-      {/* Bottom */}
       <div className="band-bottom">
-        {/* Members */}
         <div className="band-members">
           <h4>Current members</h4>
-          <ul>
-            <li>Member – Instrument</li>
-            <li>Member – Instrument</li>
-          </ul>
+        
+          {band.members && band.members.length > 0 ? (
+            <ul>
+              {band.members.map((member) => (
+                <li key={member.id}>
+                  {member.username} - {member.instruments.join(", ")}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No members yet.</p>
+          )}
         </div>
+    
 
-        {/* Events / Posts */}
         <div className="band-events">
           {posts.map((p) => (
             <div key={p.id} className="event-card">
               <img src={eventBadge} alt="Event" />
-
               <p>
-                {p.post_type} – {formatISODate(p.created_at)}
+                {p.post_type} {" - "} {formatISODate(p.created_at)}
               </p>
-
               <p>{p.post_message}</p>
               <span>See more…</span>
             </div>

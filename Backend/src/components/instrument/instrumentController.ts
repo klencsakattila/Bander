@@ -83,7 +83,7 @@ export async function createInstrument(req: Request, res: Response) {
     }
 }
 
-export async function getAllInstruments(req: Request, res: Response) {
+export async function getAllInstruments(_req: Request, res: Response) {
     const connection = await mysql.createConnection(config.database);
 
     try {

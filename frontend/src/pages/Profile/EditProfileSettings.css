@@ -112,3 +112,79 @@
     }
   }
   
+  /* MultiSelectDropdown */
+.msd {
+  position: relative;
+  width: 100%;
+}
+
+.msd-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.msd-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.msd-trigger-text.is-placeholder {
+  opacity: 0.6;
+}
+
+.msd-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  padding: 8px;
+}
+
+.msd-scroll {
+  max-height: 220px;
+  overflow: auto;
+}
+
+.msd-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.msd-item:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.msd-item input[type="checkbox"] {
+  pointer-events: none; /* click the whole row */
+}
+
+.msd-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.12);
+  margin: 8px 0;
+}
+
+.msd-item--all {
+  font-weight: 600;
+}

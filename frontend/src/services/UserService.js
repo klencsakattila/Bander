@@ -6,9 +6,9 @@ export async function getUsersLimit(limit = 20, offset = 0, token) {
   return apiFetch(`/users/limit/${safeLimit}/${safeOffset}`, { token });
 }
 
-export async function getUserById(id, token) {
-  if (!id) throw new Error("id is required");
-  return apiFetch(`/users/${id}`, { token });
+export async function getUserById(userid, token) {
+  if (!userid) throw new Error("userid is required");
+  return apiFetch(`/users/${userid}`, { token });
 }
 
 export async function updateUser(
@@ -40,16 +40,4 @@ export async function deleteUser(id, token) {
     method: "DELETE",
     token,
   });
-}
-
-export async function getMe(token) {
-  const res = await fetch("/api/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch /me");
-
-  return res.json();
 }

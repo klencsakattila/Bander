@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./ArtistProfilePage.css";
 import avatar from "../../assets/images/default-avatar.png";
@@ -10,10 +10,13 @@ import { useLoadById } from "../../hooks/useLoadById";
 
 export default function ArtistProfilePage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { userId, isAuth } = useAuth();
+  const { token, isAuth, userId } = useAuth();
 
-  const { data: row, loading, error } = useLoadById(id, getUserById);
+  const loader = useCallback((uid) => getUserById(uid, token), [token]);
+
+  const { data: row, loading, error } = useLoadById(id, loader, [token]);
+  const navigate = useNavigate();
+
 
   // map backend → UI shape
   const artist = useMemo(() => {
@@ -74,7 +77,7 @@ export default function ArtistProfilePage() {
             Styles: {artist.styles.length ? artist.styles.join(", ") : "—"}
           </p>
 
-          <p className="artist-meta">Band: {artist.band || "—"}</p>
+          {/* <p className="artist-meta">Band: {artist.band || "—"}</p> */}
         </div>
 
         <button className="send-message-btn" onClick={handleSendMessage}>

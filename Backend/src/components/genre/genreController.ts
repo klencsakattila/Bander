@@ -83,7 +83,7 @@ export async function createGenre(req: Request, res: Response) {
     }
 }
 
-export async function getAllGenres(req: Request, res: Response) {
+export async function getAllGenres(_req: Request, res: Response) {
     const connection = await mysql.createConnection(config.database);
 
     try {

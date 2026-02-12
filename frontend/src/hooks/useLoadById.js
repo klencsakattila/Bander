@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-export function useLoadById(id, loader) {
+export function useLoadById(id, loader, deps = []) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function useLoadById(id, loader) {
         if (!cancelled) setData(row);
       } catch (e) {
         if (!cancelled) {
-          setError("Not found");
+          setError(String(e?.message || "Not found"));
           setData(null);
         }
       } finally {
@@ -29,10 +29,18 @@ export function useLoadById(id, loader) {
     }
 
     if (id) load();
+    else {
+      setData(null);
+      setLoading(false);
+      setError("");
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [id, loader]);
+    // IMPORTANT: don't depend on loader identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, ...deps]);
 
   return { data, loading, error };
 }

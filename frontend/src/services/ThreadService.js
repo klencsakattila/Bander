@@ -1,19 +1,21 @@
 // src/services/ThreadService.js
 import { apiFetch } from "./apiClient";
 
-// GET /threads/:id/:numberofmessages
-export function getThreadById(threadId, numberOfMessages = 20, token) {
-  if (!threadId) throw new Error("threadId is required");
-  const limit = Math.min(100, Math.max(1, Number(numberOfMessages) || 20));
-  return apiFetch(`/threads/${threadId}/${limit}`, { token });
-}
-
 // POST /threads  body: { user1_id, user2_id }
-export function createThread({ user1_id, user2_id }, token) {
-  if (!user1_id || !user2_id) throw new Error("user1_id and user2_id are required");
-  return apiFetch(`/threads`, {
+export async function createOrGetThread(user1Id, user2Id, token) {
+  if (!user1Id || !user2Id) throw new Error("user1Id and user2Id are required");
+
+  return apiFetch(`/thread`, {
     method: "POST",
-    body: { user1_id, user2_id },
+    body: { user1_id: user1Id, user2_id: user2Id },
     token,
   });
+}
+
+// GET /threads/:id/:numberofmessages
+export async function getThreadById(threadId, numberOfMessages = 20, token) {
+  if (!threadId) throw new Error("threadId is required");
+
+  const limit = Math.min(100, Math.max(1, Number(numberOfMessages) || 20));
+  return apiFetch(`/thread/${threadId}/${limit}`, { token });
 }
