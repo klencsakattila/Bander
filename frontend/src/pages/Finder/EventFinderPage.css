@@ -24,6 +24,10 @@
     font-size: 14px;
     outline: none;
   }
+  .event-card{
+  position: relative;
+  overflow: visible;
+}
   
   /* ===============================
      LAYOUT

@@ -14,6 +14,10 @@
   color: #264653;
   margin-bottom: 8px;
 }
+.event-card{
+  position: relative;
+  overflow: visible;
+}
 
 .event-description {
   font-size: 14px;

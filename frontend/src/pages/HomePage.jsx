@@ -66,6 +66,7 @@ export default function HomePage() {
           {artists.map((a) => (
             <Link key={a.id} to={`/artist/${a.id}`} className="artist-link-wrapper">
               <ArtistCard
+                key={a.id}
                 id={a.id}
                 image={placeholder}
                 username={a.username || a.userName}

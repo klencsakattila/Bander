@@ -4,6 +4,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import AdminRoute from "./AdminRoute";
 import AdminModerationPage from "../pages/Moderation/AdminModerationPage";
+import ReportsAdminPage from "../pages/Moderation/ReportsAdminPage";
 
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/Auth/LoginPage";
@@ -18,6 +19,7 @@ import MessagesPage from "../pages/Messages/MessagePage";
 import EventFinderPage from "../pages/Finder/EventFinderPage";
 import AboutPage from "../pages/AboutPage";
 import EditBandPage from "../pages/Band/EditBandPage";
+
 
 
 export default function AppRouter() {
@@ -47,6 +49,7 @@ export default function AppRouter() {
         element={
           <AdminRoute>
             <AdminModerationPage />
+            <ReportsAdminPage />
           </AdminRoute>
         }
       />

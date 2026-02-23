@@ -1,9 +1,13 @@
 import "./EventCard.css";
-import eventBadge from "../../assets/images/event-badge.png"; 
+import eventBadge from "../../assets/images/event-badge.png";
+import ReportAction from "./ReportAction";
 
-export default function EventCard({ bandName, eventName, date, description }) {
+export default function EventCard({ id, bandName, eventName, date, description }) {
   return (
     <div className="event-card">
+      {/* Report a jobb felső sarokban */}
+      <ReportAction targetType="post" targetId={id} />
+
       <img src={eventBadge} alt="Upcoming Event" className="event-image" />
 
       <h4 className="event-title">

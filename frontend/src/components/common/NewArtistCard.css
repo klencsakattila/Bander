@@ -25,6 +25,11 @@
   margin-top: 10px;
 }
 
+.artist-card{
+  position: relative;
+  overflow: visible;
+}
+
 /* Username */
 .artist-name {
   font-size: 18px;

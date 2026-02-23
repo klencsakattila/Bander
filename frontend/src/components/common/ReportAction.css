@@ -1,0 +1,25 @@
+/* A kártyákon a report sarokba kerül */
+.report-action{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+}
+
+.report-btn{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Popover (a modal) a gomb alatt */
+.report-popover{
+  position: absolute;
+  right: 0;
+  top: 36px;
+  z-index: 999;
+}
