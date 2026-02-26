@@ -17,16 +17,6 @@ export default function NewArtistCard({ id, image, username, description }) {
       <button className="tiny-btn" onClick={() => setOpen((v) => !v)}>
         Report
       </button>
-
-      {open && (
-        <div className="report-popover">
-          <ReportModal
-            targetType="user"
-            targetId={id}
-            onClose={() => setOpen(false)}
-          />
-        </div>
-      )}
     </div>
   );
 }

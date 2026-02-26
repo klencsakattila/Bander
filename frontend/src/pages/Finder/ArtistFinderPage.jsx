@@ -8,6 +8,7 @@ import { getAllGenres } from "../../services/GenreService";
 import { getAllInstruments } from "../../services/InstrumentService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { user } from "../../utils/fieldGetters";
+import ReportModal from "../../components/common/ReportModal";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const toAbsUrl = (u) =>
   u && typeof u === "string" && u.startsWith("/uploads/")
@@ -38,6 +39,21 @@ export default function ArtistFinderPage() {
   const [genreList, setGenreList] = useState([]);
   const [instrumentList, setInstrumentList] = useState([]);
   const [filtersLoading, setFiltersLoading] = useState(true);
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState(null);
+
+  function openReport(e, targetUserId) {
+    e.preventDefault();     // ne navigáljon a Link
+    e.stopPropagation();    // ne bubble-öljön fel
+    setReportTargetId(targetUserId);
+    setReportOpen(true);
+  }
+
+  function closeReport() {
+    setReportOpen(false);
+    setReportTargetId(null);
+  }
 
   // 🔥 Track which users already hydrated
   const hydratedIdsRef = useRef(new Set());
@@ -358,13 +374,20 @@ export default function ArtistFinderPage() {
                   <p>{fullName || "Artist"}</p>
                   <p>{user.city(a) || ""}</p>
 
-                  {/* 🔥 Optional: show instruments & genres */}
                   <p className="muted">
                     {user.instruments(a).slice(0, 2).join(", ")}
                   </p>
                   <p className="muted">
                     {user.genres(a).slice(0, 2).join(", ")}
                   </p>
+
+                  <button
+                    type="button"
+                    className="artist-report-btn"
+                    onClick={(e) => openReport(e, user.id(a))}
+                  >
+                    Report
+                  </button>
                 </Link>
               );
             })}
@@ -383,6 +406,13 @@ export default function ArtistFinderPage() {
               <p style={{ opacity: 0.7 }}>No more artists.</p>
             )}
           </div>
+          {reportOpen && reportTargetId && (
+            <ReportModal
+              targetType="user"
+              targetId={reportTargetId}
+              onClose={closeReport}
+            />
+          )}
         </div>
       </div>
     </div>

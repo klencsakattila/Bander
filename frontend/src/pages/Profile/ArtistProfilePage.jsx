@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./ArtistProfilePage.css";
 import avatarFallback from "../../assets/images/default-avatar.png";
@@ -7,6 +7,9 @@ import { getUserById } from "../../services/UserService";
 import { useAuth } from "../../context/AuthContext";
 import { useLoadById } from "../../hooks/useLoadById";
 
+// ✅ importáld a modalt (útvonalat igazítsd, ahol tényleg van)
+import ReportModal from "../../components/common/ReportModal";
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const toAbsUrl = (u) => (u && typeof u === "string" && u.startsWith("/uploads/") ? `${API_BASE}${u}` : u);
 
@@ -14,6 +17,8 @@ export default function ArtistProfilePage() {
   const { id } = useParams();
   const { token, isAuth, userId } = useAuth();
   const navigate = useNavigate();
+
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const loader = useCallback((uid) => getUserById(uid, token), [token]);
   const { data: row, loading, error } = useLoadById(id, loader, [token]);
@@ -35,8 +40,6 @@ export default function ArtistProfilePage() {
       styles: Array.isArray(row.styles) ? row.styles : row.styles ? [String(row.styles)] : [],
       band: row.band ?? null,
       description: row.description ?? null,
-
-      // ✅ this comes from your backend upload endpoint
       profileImageUrl: row.profile_image_url ?? "",
     };
   }, [row]);
@@ -57,6 +60,22 @@ export default function ArtistProfilePage() {
     navigate(`/message/${artist.id}`);
   }
 
+  function handleOpenReport() {
+    if (!artist) return;
+
+    if (!isAuth || !userId) {
+      navigate("/login");
+      return;
+    }
+
+    if (String(userId) === String(artist.id)) {
+      alert("You can't report yourself.");
+      return;
+    }
+
+    setIsReportOpen(true);
+  }
+
   if (loading) return <p style={{ padding: "40px" }}>Loading artist...</p>;
   if (error) return <p style={{ padding: "40px", color: "red" }}>{String(error)}</p>;
   if (!artist) return <p style={{ padding: "40px" }}>No artist data.</p>;
@@ -67,7 +86,6 @@ export default function ArtistProfilePage() {
   const instrumentsText = artist.instruments.length ? artist.instruments.join(", ") : "—";
   const stylesText = artist.styles.length ? artist.styles.join(", ") : "—";
 
-  // Optional fallback to localStorage (if you still want it):
   const localKey = `bander:user:avatar:${artist.id}`;
   let localAvatar = "";
   try {
@@ -76,7 +94,6 @@ export default function ArtistProfilePage() {
     localAvatar = "";
   }
 
-  // ✅ priority: backend url -> local fallback -> placeholder
   const avatarSrc = toAbsUrl(artist.profileImageUrl) || localAvatar || avatarFallback;
 
   return (
@@ -98,6 +115,13 @@ export default function ArtistProfilePage() {
           Send a message
         </button>
 
+        <br></br>
+
+        {/* ✅ REPORT BUTTON */}
+        <button className="report-btn" onClick={handleOpenReport}>
+          Report
+        </button>
+
         <div className="artist-links">
           <h4>Referral links</h4>
           <div className="social-icons">
@@ -114,6 +138,15 @@ export default function ArtistProfilePage() {
         <h3>Description</h3>
         <p className="artist-description">{artist.description || "—"}</p>
       </div>
+
+      {/* ✅ MODAL */}
+      {isReportOpen && (
+        <ReportModal
+          targetType="user"
+          targetId={artist.id}
+          onClose={() => setIsReportOpen(false)}
+        />
+      )}
     </div>
   );
 }

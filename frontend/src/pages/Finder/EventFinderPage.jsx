@@ -104,8 +104,6 @@ export default function EventFinderPage() {
 
             return (
               <Link key={postId} to={href} className="event-card">
-                {/* ✅ Report gomb a kártyán (nem navigál el) */}
-                <ReportActionLinkSafe targetType="post" targetId={postId} />
 
                 <img className="event-cover" src={placeholder} alt={bandName} />
                 <div className="event-info">
@@ -116,6 +114,7 @@ export default function EventFinderPage() {
                   </div>
                   <p className="event-message">{post.message(p)}</p>
                 </div>
+                <ReportActionLinkSafe targetType="post" targetId={postId} />
               </Link>
             );
           })}

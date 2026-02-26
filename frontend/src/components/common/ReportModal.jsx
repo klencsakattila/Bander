@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import "./ReportButton.css";
 import { useAuth } from "../../context/AuthContext";
+import { createPortal } from "react-dom";
 import { createReport } from "../../services/ModerationService";
-import { useToast } from "../../context/ToastContext";
 
 const DEFAULT_REASONS = [
   { value: "spam", label: "Spam / reklám" },
@@ -14,8 +14,18 @@ const DEFAULT_REASONS = [
 ];
 
 export default function ReportModal({ targetType, targetId, onClose }) {
-  const { token } = useAuth();
-  const { showToast } = useToast();
+  // ✅ HOOK CSAK ITT!
+  const auth = useAuth();
+  const token = auth.token;
+
+  // ✅ reporterId kiszámolva renderben
+  const reporterId =
+    auth.userId ??
+    auth.user?.id ??
+    auth.user?.userId ??
+    auth.profile?.id ??
+    auth.me?.id ??
+    null;
 
   const [reason, setReason] = useState("spam");
   const [message, setMessage] = useState("");
@@ -40,85 +50,91 @@ export default function ReportModal({ targetType, targetId, onClose }) {
     e.preventDefault();
     setError("");
 
-    if (!token) {
+    if (!reporterId) {
       setError("Be kell jelentkezned a jelentéshez.");
+      return;
+    }
+
+    const report_message = `[${reason}] ${message.trim()}`.trim();
+    if (!report_message) {
+      setError("Írj legalább 1 karaktert a leírásba.");
       return;
     }
 
     setLoading(true);
     try {
-      const payload = {
-        targetType,
-        targetId,
-        reason,
-        message: message.trim(),
-      };
+      await createReport(
+        {
+          reporter_id: reporterId,
+          reported_user_id: targetType === "user" ? targetId : null,
+          reported_band_id: targetType === "band" ? targetId : null,
+          reported_post_id: targetType === "post" ? targetId : null,
+          report_message,
+        },
+        token
+      );
 
-      const created = await createReport(token, payload);
-
-      console.log("✅ Report created:", created); // <- itt látod a választ
-      showToast("Jelentés sikeresen elküldve!", "success");
-        onClose();
-
-      // ha automatikusan be akarod zárni 1s múlva:
-      // setTimeout(onClose, 900);
+      setOk(true);
     } catch (err) {
-      console.error("❌ Report create failed:", err);
-      showToast("Nem sikerült elküldeni a jelentést.", "error");
+      setError(err?.message || "Nem sikerült elküldeni a jelentést.");
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className="report-modal">
-      <div className="report-modal-header">
-        <h3>{title}</h3>
-        <button className="report-x" onClick={onClose} aria-label="Close">
-          ✕
-        </button>
-      </div>
-
-      {ok ? (
-        <div className="report-success">
-          <p>Köszi! A jelentést rögzítettük.</p>
-          <button onClick={onClose}>Bezárás</button>
+    const modal = (
+    <div className="report-modal-backdrop" onClick={onClose}>
+      <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="report-modal-header">
+          <h3>{title}</h3>
+          <button className="report-x" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="report-form">
-          <label>
-            Ok
-            <select value={reason} onChange={(e) => setReason(e.target.value)}>
-              {DEFAULT_REASONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </label>
 
-          <label>
-            Leírás (opcionális)
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Írd le röviden mi a probléma..."
-              rows={4}
-            />
-          </label>
-
-          {error && <p className="report-error">{error}</p>}
-
-          <div className="report-actions">
-            <button type="button" className="secondary" onClick={onClose}>
-              Mégse
-            </button>
-            <button type="submit" disabled={loading}>
-              {loading ? "Küldés..." : "Jelentés küldése"}
-            </button>
+        {ok ? (
+          <div className="report-success">
+            <p>Köszi! A jelentést rögzítettük.</p>
+            <button onClick={onClose}>Bezárás</button>
           </div>
-        </form>
-      )}
+        ) : (
+          <form onSubmit={handleSubmit} className="report-form">
+            <label>
+              Ok
+              <select value={reason} onChange={(e) => setReason(e.target.value)}>
+                {DEFAULT_REASONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Leírás (opcionális)
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Írd le röviden mi a probléma..."
+                rows={4}
+              />
+            </label>
+
+            {error && <p className="report-error">{error}</p>}
+
+            <div className="report-actions">
+              <button type="button" className="secondary" onClick={onClose}>
+                Mégse
+              </button>
+              <button type="submit" disabled={loading}>
+                {loading ? "Küldés..." : "Jelentés küldése"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

@@ -117,3 +117,25 @@
     width: 100%;
   }
 }
+/* Override ONLY on ArtistProfilePage */
+.artist-profile-page .report-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 14px;
+
+  background-color: #2f8f7f; /* same green */
+  color: white;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: background-color 0.2s ease;
+}
+
+.artist-profile-page .report-btn:hover {
+  background-color: #267468;
+}   

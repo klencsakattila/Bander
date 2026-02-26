@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { formatISODate } from "../../utils/date";
 import { useLoadById } from "../../hooks/useLoadById";
 import { pickMedia } from "../../utils/mediaUrl";
+import ReportModal from "../../components/common/ReportModal";
 
 const toList = (v) => {
   if (!v) return [];
@@ -27,6 +28,7 @@ export default function BandProfilePage() {
 
   const { data: rawBand, loading, error } = useLoadById(id, getBandById);
   const [posts, setPosts] = useState([]);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // ✅ Normalize band shape in case API/hook wraps it
   // supports: band, {band}, {data: band}, [band]
@@ -149,6 +151,15 @@ export default function BandProfilePage() {
             <p>{bandCity}</p>
 
             <p>Open spots: —</p>
+
+            <p>Open spots: —</p>
+
+            <button
+              className="band-report-btn"
+              onClick={() => setIsReportOpen(true)}
+            >
+              Report band
+            </button>
           </div>
         </div>
         <div className="band-apply">
@@ -181,6 +192,14 @@ export default function BandProfilePage() {
             <p>No members yet.</p>
           )}
         </div>
+
+        {isReportOpen && (
+          <ReportModal
+            targetType="band"
+            targetId={band.id}
+            onClose={() => setIsReportOpen(false)}
+          />
+        )}
     
 
         <div className="band-events">

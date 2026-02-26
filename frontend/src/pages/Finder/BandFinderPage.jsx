@@ -7,6 +7,7 @@ import { getBandsLimit } from "../../services/BandService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { band as bandG } from "../../utils/fieldGetters";
 import { pickMedia } from "../../utils/mediaUrl";
+import ReportModal from "../../components/common/ReportModal";
 
 const PAGE_SIZE = 10;
 
@@ -24,6 +25,21 @@ export default function BandFinderPage() {
   const [hasMore, setHasMore] = useState(true);
 
   const [error, setError] = useState("");
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState(null);
+
+  function openReport(e, bandId) {
+    e.preventDefault();
+    e.stopPropagation();
+    setReportTargetId(bandId);
+    setReportOpen(true);
+  }
+
+  function closeReport() {
+    setReportOpen(false);
+    setReportTargetId(null);
+  }
 
   async function loadFirstPage() {
     let cancelled = false;
@@ -154,6 +170,14 @@ export default function BandFinderPage() {
 
                 <h4>{bandG.name(b)}</h4>
                 <p className="muted">Location: {bandG.city(b)}</p>
+
+                <button
+                  type="button"
+                  className="band-report-btn"
+                  onClick={(e) => openReport(e, bandG.id(b))}
+                >
+                  Report
+                </button>
               </Link>
             ))}
           </div>
@@ -168,6 +192,14 @@ export default function BandFinderPage() {
               <p className="muted">No more bands.</p>
             )}
           </div>
+
+          {reportOpen && reportTargetId && (
+            <ReportModal
+              targetType="band"
+              targetId={reportTargetId}
+              onClose={closeReport}
+            />
+          )}
         </div>
       </div>
     </div>

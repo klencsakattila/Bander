@@ -22,6 +22,7 @@ export function createReport(
   },
   token
 ) {
+
   if (!reporter_id) throw new Error("reporter_id is required");
   if (!report_message) throw new Error("report_message is required");
 
