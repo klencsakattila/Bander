@@ -236,6 +236,19 @@ INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_
 ('mmolnar','mmolnar@bander.dev','demo123','Mate','Molnar','Szeged','1987-03-05'),
 ('hmolnar','hmolnar@bander.dev','demo123','Hanna','Molnar','Budapest','2000-10-06');
 
+INSERT INTO users 
+(username, email, password_hash, first_name, last_name, city, birth_date)
+VALUES
+(
+  'e2e_user',
+  'e2e@test.com',
+  'Test1234!',
+  'E2E',
+  'User',
+  'Győr',
+  '2000-01-01'
+);
+
 INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date,is_admin) VALUES
 ('admin','admin@example.com','demo123','Admin','User','Budapest','1980-01-01',1);
 
