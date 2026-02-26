@@ -18,6 +18,7 @@
     "@types/cors": "^2.8.19",
     "@types/mysql": "^2.15.27",
     "cors": "^2.8.5",
+    "cypress": "^15.11.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
