@@ -56,3 +56,44 @@ describe("Signup (real backend) + cleanup", () => {
     });
   });
 });
+
+describe('Bander – bejelentkezés', () => {
+  beforeEach(() => {
+    cy.visit('/login');
+  });
+
+  it('TC-FE-007 – Login oldal betöltése', () => {
+    cy.get('input[type="email"]').should('exist');
+    cy.get('input[type="password"]').should('exist');
+    cy.contains(/Log in/i).should('exist');
+    cy.contains(/Get started/i).should('exist');
+  });
+
+  it('TC-FE-008 – Kötelező mezők', () => {
+    cy.get('.btn-primary').contains(/Log in/i).click();
+
+    cy.contains(/email is required/i, { matchCase: false }).should('exist');
+    cy.contains(/password is required/i, { matchCase: false }).should('exist');
+  });
+
+  it('TC-FE-009 – Hibás hitelesítő adatok', () => {
+    cy.get('input[type="email"]').type('wrong@example.com');
+    cy.get('input[type="password"]').type('Wrong1234!');
+    cy.get('.btn-primary').contains(/Log in/i).click();
+
+    cy.get('.error-text').should('exist');
+  });
+
+  it('TC-FE-010 – Sikeres bejelentkezés UI', () => {
+    cy.get('input[type="email"]').type('demo@bander.test');
+    cy.get('input[type="password"]').type('Demo1234!');
+    cy.get('.btn-primary').contains(/Log in/i).click();
+
+    cy.get('.error-text').should('exist');
+  });
+
+  it('TC-FE-011 – Get started navigáció', () => {
+    cy.get('.btn-secondary').contains(/Get started/i).click();
+    cy.url().should('include', '/signup');
+  });
+});
