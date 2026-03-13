@@ -81,7 +81,6 @@ describe('Bander – bejelentkezés', () => {
     cy.get('input[type="password"]').type('Wrong1234!');
     cy.get('.btn-primary').contains(/Log in/i).click();
 
-<<<<<<< HEAD:frontend/cypress/e2e/auth/loginc.cy.ts
     cy.get('.error-text').should('exist');
   });
 
@@ -91,17 +90,6 @@ describe('Bander – bejelentkezés', () => {
     cy.get('.btn-primary').contains(/Log in/i).click();
 
     cy.get('.error-text').should('exist');
-=======
-    cy.get('.error-text').contains("[POST] http://localhost:3000/users/login -> 401 Unauthorized Incorrect email or password.").should('exist');
-  });
-
-  it('TC-FE-010 – Sikeres bejelentkezés UI', () => {
-    cy.get('input[type="email"]').type('alice@example.com');
-    cy.get('input[type="password"]').type('demo123');
-    cy.get('.btn-primary').contains(/Log in/i).click();
-
-    cy.contains(/Manage band/i).should('exist');
->>>>>>> 2b918667853f59b6391bbd64380c96b64b2c1df5:frontend/cypress/e2e/login.cy.ts
   });
 
   it('TC-FE-011 – Get started navigáció', () => {

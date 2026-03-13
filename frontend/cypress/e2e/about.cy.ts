@@ -9,7 +9,7 @@ describe('About oldal', () => {
   });
 
   it('TC-FE-051 – Terms and Conditions CTA', () => {
-    cy.contains(/Terms and Conditions/i)
+    cy.get('.about-link').contains(/Terms and Conditions/i)
       .should('have.attr', 'href')
       .then(href => {
         expect(href).to.match(/terms/i);
