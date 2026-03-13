@@ -1,10 +1,10 @@
 describe('Admin dashboard', () => {
   beforeEach(() => {
     cy.visit('/login');
-    cy.get('input[type="email"]').type('admin@bander.test');
-    cy.get('input[type="password"]').type('Admin123!');
-    cy.contains(/Log in/i).click();
-    cy.visit('/admin');
+    cy.get('input[type="email"]').type('admin@example.com');
+    cy.get('input[type="password"]').type('demo123');
+    cy.get('.btn-primary').contains(/Log in/i).click();
+    cy.get('[href="/admin"]').click();
   });
 
   it('TC-FE-052 – Admin dashboard betöltése', () => {
@@ -15,20 +15,19 @@ describe('Admin dashboard', () => {
   });
 
   it('TC-FE-053 – Reports tábla megjelenítése', () => {
-    cy.get('[data-testid="reports-table"]').within(() => {
+    cy.get('.adm-main').within(() => {
       cy.contains(/ID/i);
-      cy.contains(/Name/i);
+      cy.contains(/Reporter/i);
       cy.contains(/Subject/i);
       cy.contains(/Status/i);
     });
   });
 
   it('TC-FE-054 – Felhasználó tiltás UI', () => {
-    cy.get('[data-testid="ban-user-form"]').within(() => {
-      cy.get('input[name="userId"]').type('123');
-      cy.get('textarea[name="reason"]').type('Cypress test reason');
-      cy.contains(/Ban user/i).click();
-    });
+    cy.get('.adm-tabs > :nth-child(2)').click();
+    cy.get('.adm-actions-grid > :nth-child(1)')
+    cy.get(':nth-child(1) > .adm-form > .adm-form-row > :nth-child(1) > .adm-input').type('123');
+    cy.contains(/Ban user/i).click();
     cy.contains(/success/i, { matchCase: false }).should('exist');
   });
 
