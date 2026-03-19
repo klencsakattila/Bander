@@ -12,7 +12,7 @@ describe('About oldal', () => {
     cy.get('.about-link').contains(/Terms and Conditions/i)
       .should('have.attr', 'href')
       .then(href => {
-        expect(href).to.match(/terms/i);
+        expect(href).to.match(/terms-and-conditions/i);
       });
   });
 });
