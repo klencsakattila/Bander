@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./ReportsAdminPage.css";
 import { useAuth } from "../../context/AuthContext";
-
-// 🔁 kösd be a service hívásaidat
+import { useToast } from "../../context/ToastContext";
 import { getReports, updateReportStatus, getReportById } from "../../services/ModerationService";
 
 const STATUS_OPTIONS = [
@@ -13,10 +12,10 @@ const STATUS_OPTIONS = [
 
 export default function ReportsAdminPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [reports, setReports] = useState([]);
   const [statusFilter, setStatusFilter] = useState("open");
   const [selectedId, setSelectedId] = useState(null);
@@ -27,14 +26,14 @@ export default function ReportsAdminPage() {
     setLoading(true);
     setError("");
     try {
-      // 🔁 ha a backend tud filtert query parammal, add át
       const data = await getReports(token, { status: statusFilter });
       setReports(data || []);
-      // reset detail
       setSelectedId(null);
       setDetail(null);
     } catch (err) {
-      setError(err?.message || "Nem sikerült betölteni a reportokat.");
+      const msg = err?.message || "Failed to load reports.";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -52,7 +51,7 @@ export default function ReportsAdminPage() {
       const d = await getReportById(token, id);
       setDetail(d);
     } catch (err) {
-      setDetail({ error: err?.message || "Nem sikerült betölteni a részleteket." });
+      setDetail({ error: err?.message || "Failed to load report details." });
     }
   }
 
@@ -65,14 +64,13 @@ export default function ReportsAdminPage() {
     setSaving(true);
     try {
       await updateReportStatus(token, id, { status: nextStatus });
-      // frissítsük a listát helyben
       setReports((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status: nextStatus } : r))
       );
-      // detail frissítés
       if (detail && detail.id === id) setDetail({ ...detail, status: nextStatus });
+      showToast("Status updated.", "success");
     } catch (err) {
-      alert(err?.message || "Státusz mentése sikertelen.");
+      showToast(err?.message || "Failed to save status.", "error");
     } finally {
       setSaving(false);
     }
@@ -85,7 +83,6 @@ export default function ReportsAdminPage() {
     <div className="admin-reports">
       <div className="admin-reports-header">
         <h2>Reports</h2>
-
         <div className="filters">
           <label>
             Status
@@ -95,7 +92,6 @@ export default function ReportsAdminPage() {
               ))}
             </select>
           </label>
-
           <button onClick={load} disabled={loading}>Refresh</button>
         </div>
       </div>
@@ -103,7 +99,7 @@ export default function ReportsAdminPage() {
       <div className="admin-reports-grid">
         <div className="list">
           {reports.length === 0 ? (
-            <p className="muted">Nincs report ebben a státuszban.</p>
+            <p className="muted">No reports in this status.</p>
           ) : (
             reports.map((r) => (
               <button
@@ -129,13 +125,12 @@ export default function ReportsAdminPage() {
 
         <div className="detail">
           {!selected ? (
-            <p className="muted">Válassz ki egy reportot baloldalt.</p>
+            <p className="muted">Select a report on the left.</p>
           ) : detail?.error ? (
             <p className="err">{detail.error}</p>
           ) : (
             <>
               <h3>Report #{selected.id}</h3>
-
               <div className="detail-box">
                 <p><b>Target:</b> {selected.targetType} (id: {selected.targetId})</p>
                 <p><b>Reason:</b> {selected.reason}</p>
@@ -143,7 +138,6 @@ export default function ReportsAdminPage() {
                 <p><b>Created:</b> {formatMaybeDate(selected.createdAt)}</p>
                 <p><b>Message:</b> {detail?.message || selected.message || <span className="muted">—</span>}</p>
               </div>
-
               <div className="detail-actions">
                 {STATUS_OPTIONS.map((s) => (
                   <button

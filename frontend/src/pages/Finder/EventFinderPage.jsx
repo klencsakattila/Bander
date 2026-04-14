@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import "./EventFinderPage.css";
 import placeholder from "../../assets/images/event-badge.png";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { getLatestBandPosts } from "../../services/BandService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { formatISODate, post } from "../../utils/fieldGetters";
 import ReportActionLinkSafe from "../../components/common/ReportActionLinkSafe";
 
 export default function EventFinderPage() {
+  const { showToast } = useToast();
   const { token } = useAuth();
 
   const [posts, setPosts] = useState([]);
@@ -25,7 +27,7 @@ export default function EventFinderPage() {
         const data = await getLatestBandPosts(20, token);
         if (!cancelled) setPosts(Array.isArray(data) ? data : []);
       } catch (e) {
-        if (!cancelled) setError(e?.message || "Failed to load events");
+        if (!cancelled) showToast(e?.message || "Failed to load events", "error");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,7 +51,7 @@ export default function EventFinderPage() {
   }, [posts, search, filters]);
 
   if (loading) return <p style={{ padding: 40 }}>Loading events...</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
+  
 
   return (
     <div className="event-finder-page">

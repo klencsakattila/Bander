@@ -41,3 +41,12 @@ export async function deleteUser(id, token) {
     token,
   });
 }
+export async function resetUserPassword(id, newPassword, token) {
+  if (!id) throw new Error("id is required");
+  if (!newPassword) throw new Error("newPassword is required");
+  return apiFetch(`/users/${id}`, {
+    method: "PATCH",
+    body: { password_hash: newPassword },
+    token,
+  });
+}

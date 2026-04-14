@@ -1,25 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AdminModerationPage.css";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import {
   getReports,
   updateReportStatus,
   deleteReport,
-  deleteUserById,
   deleteBandById,
   deleteEventById,
 } from "../../services/ModerationService";
+import { getUsersLimit } from "../../services/UserService";
+import { getBandsLimit, getLatestBandPosts } from "../../services/BandService";
+import { resetUserPassword } from "../../services/UserService";
 
 const TABS = {
   QUEUE: "queue",
   ACTIONS: "actions",
 };
 
+function generatePassword(length = 16) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 function normalizeReportsPayload(payload) {
-  // supports multiple backend shapes:
-  // 1) [ ... ]
-  // 2) { reports: [ ... ] }
-  // 3) { data: [ ... ] }
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.reports)) return payload.reports;
   if (Array.isArray(payload?.data)) return payload.data;
@@ -28,11 +36,8 @@ function normalizeReportsPayload(payload) {
 
 function mapReport(r) {
   const id = r?.id ?? r?.report_id ?? r?.reportId;
-
   const status = r?.report_status ?? r?.status ?? "open";
-
   const createdAt = r?.createdAt ?? r?.created_at ?? r?.created ?? null;
-
   const subject =
     r?.subject ??
     r?.report_message ??
@@ -44,7 +49,6 @@ function mapReport(r) {
       : r?.reported_user_id
       ? "User"
       : "Report");
-
   const name =
     r?.reporter_name ??
     r?.reporterUsername ??
@@ -53,47 +57,29 @@ function mapReport(r) {
     r?.reporter?.name ??
     r?.name ??
     "—";
-
-  return {
-    raw: r,
-    id,
-    status,
-    createdAt,
-    subject,
-    name,
-  };
+  return { raw: r, id, status, createdAt, subject, name };
 }
 
 export default function AdminModerationPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
 
   const [tab, setTab] = useState(TABS.QUEUE);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [stats, setStats] = useState({
-    users: 0,
-    bands: 0,
-    reports: 0,
-    events: 0,
-  });
+  const [stats, setStats] = useState({ users: 0, bands: 0, reports: 0, events: 0 });
 
-  // Queue
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [reports, setReports] = useState([]);
 
-  // Filters
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all"); // all | open | reviewing | resolved
+  const [status, setStatus] = useState("all");
 
-  // Manual actions
+  // Manual action state
   const [banUserId, setBanUserId] = useState("");
-  const [banUserReason, setBanUserReason] = useState("");
-
   const [banBandId, setBanBandId] = useState("");
-  const [banBandReason, setBanBandReason] = useState("");
-
   const [deleteEventId, setDeleteEventId] = useState("");
-  const [deleteEventReason, setDeleteEventReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -101,44 +87,50 @@ export default function AdminModerationPage() {
     async function load() {
       try {
         setLoading(true);
-        setError("");
-
         if (!token) throw new Error("Missing token (admin auth required)");
 
-        const payload = await getReports(token);
-        const list = normalizeReportsPayload(payload).map(mapReport);
+        // Fetch all data in parallel for real stats
+        const [reportsPayload, usersPayload, bandsPayload, eventsPayload] = await Promise.all([
+          getReports(token).catch(() => []),
+          getUsersLimit(999, 0, token).catch(() => []),
+          getBandsLimit(999, 0, token).catch(() => []),
+          getLatestBandPosts(999, 0, token).catch(() => []),
+        ]);
 
         if (!alive) return;
+
+        const list = normalizeReportsPayload(reportsPayload).map(mapReport);
+        const usersList = Array.isArray(usersPayload) ? usersPayload : [];
+        const bandsList = Array.isArray(bandsPayload) ? bandsPayload : [];
+        const eventsList = Array.isArray(eventsPayload) ? eventsPayload : [];
 
         setReports(list);
-        setStats((prev) => ({
-          ...prev,
+        setStats({
           reports: list.length,
-        }));
+          users: usersList.length,
+          bands: bandsList.length,
+          events: eventsList.length,
+        });
       } catch (e) {
         if (!alive) return;
-        setError(String(e?.message || "Failed to load moderation data"));
+        showToast(String(e?.message || "Failed to load moderation data"), "error");
       } finally {
         if (alive) setLoading(false);
       }
     }
 
     load();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [token]);
 
   const filteredReports = useMemo(() => {
     const q = query.trim().toLowerCase();
-
     return reports.filter((r) => {
       const matchesQ =
         !q ||
         String(r.id ?? "").includes(q) ||
         (r.name || "").toLowerCase().includes(q) ||
         (r.subject || "").toLowerCase().includes(q);
-
       const matchesStatus = status === "all" ? true : r.status === status;
       return matchesQ && matchesStatus;
     });
@@ -150,8 +142,9 @@ export default function AdminModerationPage() {
       setReports((prev) =>
         prev.map((r) => (r.id === reportId ? { ...r, status: "resolved" } : r))
       );
+      showToast("Report resolved.", "success");
     } catch (e) {
-      alert(String(e?.message || "Failed to resolve report"));
+      showToast(String(e?.message || "Failed to resolve report"), "error");
     }
   }
 
@@ -161,68 +154,86 @@ export default function AdminModerationPage() {
       setReports((prev) =>
         prev.map((r) => (r.id === reportId ? { ...r, status: "reviewing" } : r))
       );
+      showToast("Report marked as reviewing.", "success");
     } catch (e) {
-      alert(String(e?.message || "Failed to update report status"));
+      showToast(String(e?.message || "Failed to update report status"), "error");
     }
   }
 
   async function handleReject(reportId) {
-    // backend doesn't support "rejected" status -> reject = delete
     try {
       await deleteReport(reportId, token);
       setReports((prev) => prev.filter((r) => r.id !== reportId));
       setStats((prev) => ({ ...prev, reports: Math.max(0, prev.reports - 1) }));
+      showToast("Report rejected and deleted.", "success");
     } catch (e) {
-      alert(String(e?.message || "Failed to reject/delete report"));
+      showToast(String(e?.message || "Failed to reject/delete report"), "error");
     }
   }
 
+  // Ban user = set random 16-char password (account preserved, login blocked)
   async function submitBanUser(e) {
     e.preventDefault();
-    if (!banUserId) return alert("UserID is required");
-
+    if (!banUserId.trim()) return showToast("UserID is required", "error");
     try {
-      await deleteUserById(banUserId, token);
-      alert(`User ${banUserId} deleted`);
+      setActionLoading(true);
+      const newPass = generatePassword(16);
+      await resetUserPassword(banUserId.trim(), newPass, token);
+      showToast(`User ${banUserId} has been locked (password reset).`, "success");
       setBanUserId("");
-      setBanUserReason("");
     } catch (err) {
-      alert(String(err?.message || "Failed to delete user"));
+      showToast(String(err?.message || "Failed to lock user"), "error");
+    } finally {
+      setActionLoading(false);
     }
   }
 
   async function submitBanBand(e) {
     e.preventDefault();
-    if (!banBandId) return alert("BandID is required");
-
+    if (!banBandId.trim()) return showToast("BandID is required", "error");
     try {
-      await deleteBandById(banBandId, token);
-      alert(`Band ${banBandId} deleted`);
+      setActionLoading(true);
+      await deleteBandById(banBandId.trim(), token);
+      showToast(`Band ${banBandId} deleted.`, "success");
       setBanBandId("");
-      setBanBandReason("");
+      setStats((prev) => ({ ...prev, bands: Math.max(0, prev.bands - 1) }));
     } catch (err) {
-      alert(String(err?.message || "Failed to delete band"));
+      showToast(String(err?.message || "Failed to delete band"), "error");
+    } finally {
+      setActionLoading(false);
     }
   }
 
   async function submitDeleteEvent(e) {
     e.preventDefault();
-    if (!deleteEventId) return alert("EventID is required");
-
+    if (!deleteEventId.trim()) return showToast("EventID is required", "error");
     try {
-      await deleteEventById(deleteEventId, token);
-      alert(`Event ${deleteEventId} deleted`);
+      setActionLoading(true);
+      await deleteEventById(deleteEventId.trim(), token);
+      showToast(`Event ${deleteEventId} deleted.`, "success");
       setDeleteEventId("");
-      setDeleteEventReason("");
+      setStats((prev) => ({ ...prev, events: Math.max(0, prev.events - 1) }));
     } catch (err) {
-      alert(String(err?.message || "Failed to delete event"));
+      showToast(String(err?.message || "Failed to delete event"), "error");
+    } finally {
+      setActionLoading(false);
     }
   }
 
   return (
     <div className="adm-shell">
+      {/* Mobile hamburger */}
+      <button
+        className="adm-hamburger"
+        type="button"
+        onClick={() => setSidebarOpen((v) => !v)}
+        aria-label="Toggle sidebar"
+      >
+        <span /><span /><span />
+      </button>
+
       {/* Sidebar */}
-      <aside className="adm-sidebar">
+      <aside className={`adm-sidebar ${sidebarOpen ? "is-open" : ""}`}>
         <div className="adm-brand">
           <div className="adm-logo" />
           <div>
@@ -232,43 +243,44 @@ export default function AdminModerationPage() {
         </div>
 
         <nav className="adm-nav">
-          <button className="adm-nav-item is-active" type="button">
-            Moderation
+          <button
+            className={`adm-nav-item ${tab === TABS.QUEUE ? "is-active" : ""}`}
+            type="button"
+            onClick={() => { setTab(TABS.QUEUE); setSidebarOpen(false); }}
+          >
+            Moderation Queue
           </button>
-          <button className="adm-nav-item" type="button">
-            Users
-          </button>
-          <button className="adm-nav-item" type="button">
-            Bands
-          </button>
-          <button className="adm-nav-item" type="button">
-            Events
+          <button
+            className={`adm-nav-item ${tab === TABS.ACTIONS ? "is-active" : ""}`}
+            type="button"
+            onClick={() => { setTab(TABS.ACTIONS); setSidebarOpen(false); }}
+          >
+            Manual Actions
           </button>
         </nav>
 
         <div className="adm-sidebar-foot">
           <div className="adm-hint">Tip</div>
           <div className="adm-hint-text">
-            Use the queue for reports and the actions tab for manual admin tasks.
+            Use the queue for reports and manual actions for administrative tasks.
           </div>
         </div>
       </aside>
+
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div className="adm-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
 
       {/* Main */}
       <main className="adm-main">
         <header className="adm-header">
           <div>
             <h1 className="adm-h1">Moderation Overview</h1>
-            <p className="adm-p">
-              Review reports, resolve issues, and run manual actions.
-            </p>
+            <p className="adm-p">Review reports, resolve issues, and run manual actions.</p>
           </div>
-
           <div className="adm-header-actions">
             <div className="adm-chip">Environment: Local</div>
-            <button className="adm-btn adm-btn-ghost" type="button">
-              Export
-            </button>
           </div>
         </header>
 
@@ -304,11 +316,8 @@ export default function AdminModerationPage() {
             <div className="adm-card-head">
               <div>
                 <h2 className="adm-h2">Reports</h2>
-                <p className="adm-muted">
-                  Search, filter, and handle moderation reports.
-                </p>
+                <p className="adm-muted">Search, filter, and handle moderation reports.</p>
               </div>
-
               <div className="adm-filters">
                 <input
                   className="adm-input"
@@ -330,9 +339,8 @@ export default function AdminModerationPage() {
             </div>
 
             {loading && <div className="adm-loading">Loading reports…</div>}
-            {error && <div className="adm-error">{String(error)}</div>}
 
-            {!loading && !error && (
+            {!loading && (
               <div className="adm-table-wrap">
                 <table className="adm-table">
                   <thead>
@@ -350,11 +358,9 @@ export default function AdminModerationPage() {
                       <tr key={r.id}>
                         <td className="adm-mono">#{r.id}</td>
                         <td>{r.name}</td>
-                        <td>{r.subject}</td>
-                        <td className="adm-muted">{r.createdAt || "—"}</td>
-                        <td>
-                          <StatusPill status={r.status} />
-                        </td>
+                        <td className="adm-subject-cell">{r.subject}</td>
+                        <td className="adm-muted adm-date-cell">{r.createdAt || "—"}</td>
+                        <td><StatusPill status={r.status} /></td>
                         <td className="adm-td-right">
                           <div className="adm-row-actions">
                             <button
@@ -378,7 +384,7 @@ export default function AdminModerationPage() {
                               className="adm-btn adm-btn-ghost adm-btn-small"
                               onClick={() => handleReject(r.id)}
                             >
-                              Reject (delete)
+                              Reject
                             </button>
                           </div>
                         </td>
@@ -387,9 +393,7 @@ export default function AdminModerationPage() {
 
                     {filteredReports.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="adm-empty">
-                          No reports found.
-                        </td>
+                        <td colSpan={6} className="adm-empty">No reports found.</td>
                       </tr>
                     )}
                   </tbody>
@@ -402,76 +406,53 @@ export default function AdminModerationPage() {
         {/* Manual Actions */}
         {tab === TABS.ACTIONS && (
           <section className="adm-actions-grid">
-            {/* Ban User */}
+            {/* Lock User */}
             <div className="adm-card">
               <div className="adm-card-head">
                 <div>
-                  <h2 className="adm-h2">Ban User</h2>
-                  <p className="adm-muted">Delete a user account by ID.</p>
+                  <h2 className="adm-h2">Lock User</h2>
+                  <p className="adm-muted">
+                    Resets the user's password to a random 16-character code, preventing login
+                    while preserving the account.
+                  </p>
                 </div>
               </div>
-
               <form className="adm-form" onSubmit={submitBanUser}>
-                <div className="adm-form-row">
-                  <div className="adm-form-group">
-                    <label>UserID</label>
-                    <input
-                      className="adm-input"
-                      value={banUserId}
-                      onChange={(e) => setBanUserId(e.target.value)}
-                      placeholder="e.g. 123"
-                    />
-                  </div>
-                  <div className="adm-form-group">
-                    <label>Reason</label>
-                    <input
-                      className="adm-input"
-                      value={banUserReason}
-                      onChange={(e) => setBanUserReason(e.target.value)}
-                      placeholder="optional"
-                    />
-                  </div>
+                <div className="adm-form-group">
+                  <label>UserID</label>
+                  <input
+                    className="adm-input"
+                    value={banUserId}
+                    onChange={(e) => setBanUserId(e.target.value)}
+                    placeholder="e.g. 123"
+                  />
                 </div>
-
-                <button className="adm-btn" type="submit">
-                  Ban User
+                <button className="adm-btn adm-btn-danger" type="submit" disabled={actionLoading}>
+                  {actionLoading ? "Processing..." : "Lock User"}
                 </button>
               </form>
             </div>
 
-            {/* Ban Band */}
+            {/* Delete Band */}
             <div className="adm-card">
               <div className="adm-card-head">
                 <div>
-                  <h2 className="adm-h2">Ban Band</h2>
-                  <p className="adm-muted">Delete a band profile by ID.</p>
+                  <h2 className="adm-h2">Delete Band</h2>
+                  <p className="adm-muted">Permanently remove a band profile by ID.</p>
                 </div>
               </div>
-
               <form className="adm-form" onSubmit={submitBanBand}>
-                <div className="adm-form-row">
-                  <div className="adm-form-group">
-                    <label>BandID</label>
-                    <input
-                      className="adm-input"
-                      value={banBandId}
-                      onChange={(e) => setBanBandId(e.target.value)}
-                      placeholder="e.g. 55"
-                    />
-                  </div>
-                  <div className="adm-form-group">
-                    <label>Reason</label>
-                    <input
-                      className="adm-input"
-                      value={banBandReason}
-                      onChange={(e) => setBanBandReason(e.target.value)}
-                      placeholder="optional"
-                    />
-                  </div>
+                <div className="adm-form-group">
+                  <label>BandID</label>
+                  <input
+                    className="adm-input"
+                    value={banBandId}
+                    onChange={(e) => setBanBandId(e.target.value)}
+                    placeholder="e.g. 55"
+                  />
                 </div>
-
-                <button className="adm-btn" type="submit">
-                  Ban Band
+                <button className="adm-btn adm-btn-danger" type="submit" disabled={actionLoading}>
+                  {actionLoading ? "Processing..." : "Delete Band"}
                 </button>
               </form>
             </div>
@@ -481,34 +462,21 @@ export default function AdminModerationPage() {
               <div className="adm-card-head">
                 <div>
                   <h2 className="adm-h2">Delete Event</h2>
-                  <p className="adm-muted">Remove an event by EventID.</p>
+                  <p className="adm-muted">Remove an event/post by EventID.</p>
                 </div>
               </div>
-
               <form className="adm-form" onSubmit={submitDeleteEvent}>
-                <div className="adm-form-row">
-                  <div className="adm-form-group">
-                    <label>EventID</label>
-                    <input
-                      className="adm-input"
-                      value={deleteEventId}
-                      onChange={(e) => setDeleteEventId(e.target.value)}
-                      placeholder="e.g. 999"
-                    />
-                  </div>
-                  <div className="adm-form-group">
-                    <label>Reason</label>
-                    <input
-                      className="adm-input"
-                      value={deleteEventReason}
-                      onChange={(e) => setDeleteEventReason(e.target.value)}
-                      placeholder="optional"
-                    />
-                  </div>
+                <div className="adm-form-group">
+                  <label>EventID</label>
+                  <input
+                    className="adm-input"
+                    value={deleteEventId}
+                    onChange={(e) => setDeleteEventId(e.target.value)}
+                    placeholder="e.g. 999"
+                  />
                 </div>
-
-                <button className="adm-btn" type="submit">
-                  Delete Event
+                <button className="adm-btn adm-btn-danger" type="submit" disabled={actionLoading}>
+                  {actionLoading ? "Processing..." : "Delete Event"}
                 </button>
               </form>
             </div>
@@ -523,25 +491,15 @@ function StatCard({ label, value, accent }) {
   return (
     <div className={`adm-stat ${accent ? "is-accent" : ""}`}>
       <div className="adm-stat-label">{label}</div>
-      <div className="adm-stat-value">{value}</div>
+      <div className="adm-stat-value">{value ?? "—"}</div>
     </div>
   );
 }
 
 function StatusPill({ status }) {
   const cls =
-    status === "resolved"
-      ? "is-green"
-      : status === "reviewing"
-      ? "is-amber"
-      : "is-gray";
-
+    status === "resolved" ? "is-green" : status === "reviewing" ? "is-amber" : "is-gray";
   const text =
-    status === "resolved"
-      ? "Resolved"
-      : status === "reviewing"
-      ? "Reviewing"
-      : "Open";
-
+    status === "resolved" ? "Resolved" : status === "reviewing" ? "Reviewing" : "Open";
   return <span className={`adm-pill ${cls}`}>{text}</span>;
 }

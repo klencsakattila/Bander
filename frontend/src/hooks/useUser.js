@@ -8,13 +8,35 @@ function normalizeUser(data) {
   return data;
 }
 
-const toStr = (v) => (v === null || v === undefined ? "" : String(v));
-const toCsv = (v) => {
-  if (v === null || v === undefined) return "";
-  if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean).join(",");
-  return String(v);
-};
+// Parse a date string as local date (avoid UTC off-by-one)
+function toLocalDateString(value) {
+  if (!value) return "";
+  const s = String(value);
+  // If already in YYYY-MM-DD format, use it directly (no UTC parsing)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO string with time component -> take only the date part from local time
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s.slice(0, 10);
+  // Use local year/month/day to avoid timezone shifting
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
+// Convert array of names to CSV of IDs using options list
+function namesToIdsCsv(names, options) {
+  if (!names || !Array.isArray(names) || !options?.length) return "";
+  return names
+    .map((name) => {
+      const found = options.find(
+        (o) => (o.name ?? o.title ?? o.label ?? "").toLowerCase() === String(name).toLowerCase()
+      );
+      return found ? String(found.id) : null;
+    })
+    .filter(Boolean)
+    .join(",");
+}
 
 export function useEditProfileSettings() {
   const { token, userId, isAuth } = useAuth();
@@ -23,8 +45,11 @@ export function useEditProfileSettings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [user, setUser] = useState(null);
+
+  // Instrument and genre options stored here for re-use
+  const [instrumentOptions, setInstrumentOptions] = useState([]);
+  const [genreOptions, setGenreOptions] = useState([]);
 
   const [form, setForm] = useState({
     first_name: "",
@@ -34,12 +59,35 @@ export function useEditProfileSettings() {
     city: "",
     birth_date: "",
     password: "",
-
-    // UI-only
-    instruments: "",
-    styles: "",
+    instruments: "", // CSV of IDs
+    styles: "",      // CSV of IDs
     description: "",
   });
+
+  function populateFormFromUser(u, instOpts, genreOpts) {
+    const birth = toLocalDateString(u.birth_date);
+
+    // Backend returns instruments/styles as arrays of names
+    const instNames = Array.isArray(u.instruments) ? u.instruments : [];
+    const styleNames = Array.isArray(u.styles) ? u.styles : [];
+
+    const instrumentsCsv = namesToIdsCsv(instNames, instOpts);
+    const stylesCsv = namesToIdsCsv(styleNames, genreOpts);
+
+    setForm((p) => ({
+      ...p,
+      first_name: u.first_name ?? "",
+      last_name: u.last_name ?? "",
+      username: u.username ?? "",
+      email: u.email ?? "",
+      city: u.city ?? "",
+      birth_date: birth,
+      password: "",
+      instruments: instrumentsCsv,
+      styles: stylesCsv,
+      description: u.description ?? "",
+    }));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -56,39 +104,35 @@ export function useEditProfileSettings() {
         }
 
         if (!userId) {
-          setError("Missing logged-in user id. Add userId to AuthContext (decode token).");
+          setError("Missing logged-in user id.");
           return;
         }
 
-        const data = await getUserById(userId, token);
-        const u = normalizeUser(data);
+        // Import services dynamically to avoid circular deps
+        const { getAllInstruments } = await import("../services/InstrumentService");
+        const { getAllGenres } = await import("../services/GenreService");
+
+        const [data, instRes, genreRes] = await Promise.all([
+          getUserById(userId, token),
+          getAllInstruments(token).catch(() => []),
+          getAllGenres(token).catch(() => []),
+        ]);
 
         if (cancelled) return;
 
+        const u = normalizeUser(data);
         if (!u) {
           setError("User not found.");
           return;
         }
 
+        const instruments = Array.isArray(instRes) ? instRes : instRes?.data ?? [];
+        const genres = Array.isArray(genreRes) ? genreRes : genreRes?.data ?? [];
+
         setUser(u);
-
-        const birth = u.birth_date ? String(u.birth_date).slice(0, 10) : "";
-
-        setForm((p) => ({
-          ...p,
-          first_name: u.first_name ?? "",
-          last_name: u.last_name ?? "",
-          username: u.username ?? "",
-          email: u.email ?? "",
-          city: u.city ?? "",
-          birth_date: birth,
-          password: "",
-
-          // UI-only local marad
-          instruments: p.instruments ?? "",
-          styles: p.styles ?? "",
-          description: p.description ?? "",
-        }));
+        setInstrumentOptions(instruments);
+        setGenreOptions(genres);
+        populateFormFromUser(u, instruments, genres);
       } catch (e) {
         if (!cancelled) setError(e?.message || "Failed to load user");
       } finally {
@@ -112,56 +156,61 @@ export function useEditProfileSettings() {
     return (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
   }
 
-async function onSubmit(e, extra = {}) {
-  e.preventDefault();
-  setSaving(true);
-  setError("");
-  setSuccess("");
+  async function onSubmit(e, extra = {}) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setSuccess("");
 
-  try {
-    if (!isAuth) throw new Error("Not logged in.");
-    if (!userId) throw new Error("Missing logged-in user id.");
+    try {
+      if (!isAuth) throw new Error("Not logged in.");
+      if (!userId) throw new Error("Missing logged-in user id.");
 
-    const payload = {
-      first_name: (form.first_name ?? "").trim() || null,
-      last_name: (form.last_name ?? "").trim() || null,
-      username: (form.username ?? "").trim() || null,
-      email: (form.email ?? "").trim() || null,
-      city: (form.city ?? "").trim() || null,
-      birth_date: form.birth_date || null,
+      const payload = {
+        first_name: (form.first_name ?? "").trim() || null,
+        last_name: (form.last_name ?? "").trim() || null,
+        username: (form.username ?? "").trim() || null,
+        email: (form.email ?? "").trim() || null,
+        city: (form.city ?? "").trim() || null,
+        birth_date: form.birth_date || null,
+        ...extra,
+      };
 
-      // 👇 ide jönnek a tömbök (instruments/styles) kívülről
-      ...extra,
-    };
+      if (form.password && String(form.password).trim().length > 0) {
+        payload.password_hash = String(form.password).trim();
+      }
 
-    if (form.password && String(form.password).trim().length > 0) {
-      payload.password_hash = String(form.password).trim();
+      const updated = await updateUser(userId, payload, token);
+      setUser(updated);
+
+      const birth = toLocalDateString(updated?.birth_date);
+
+      // Re-resolve instruments/styles from updated data
+      const instNames = Array.isArray(updated?.instruments) ? updated.instruments : [];
+      const styleNames = Array.isArray(updated?.styles) ? updated.styles : [];
+      const instrumentsCsv = namesToIdsCsv(instNames, instrumentOptions);
+      const stylesCsv = namesToIdsCsv(styleNames, genreOptions);
+
+      setForm((p) => ({
+        ...p,
+        first_name: updated?.first_name ?? "",
+        last_name: updated?.last_name ?? "",
+        username: updated?.username ?? "",
+        email: updated?.email ?? "",
+        city: updated?.city ?? "",
+        birth_date: birth,
+        password: "",
+        instruments: instrumentsCsv || p.instruments,
+        styles: stylesCsv || p.styles,
+      }));
+
+      setSuccess("Profile updated successfully.");
+    } catch (e2) {
+      setError(e2?.message || "Failed to update user");
+    } finally {
+      setSaving(false);
     }
-
-    const updated = await updateUser(userId, payload, token);
-    setUser(updated);
-
-    const birth = updated?.birth_date ? String(updated.birth_date).slice(0, 10) : "";
-
-    setForm((p) => ({
-      ...p,
-      first_name: updated.first_name ?? "",
-      last_name: updated.last_name ?? "",
-      username: updated.username ?? "",
-      email: updated.email ?? "",
-      city: updated.city ?? "",
-      birth_date: birth,
-      password: "",
-      // UI mezők maradnak a form-ban, nem erőltetjük rá a backend shape-et
-    }));
-
-    setSuccess("Profile updated successfully.");
-  } catch (e2) {
-    setError(e2?.message || "Failed to update user");
-  } finally {
-    setSaving(false);
   }
-}
 
   return {
     token,
@@ -177,5 +226,7 @@ async function onSubmit(e, extra = {}) {
     fullName,
     onChange,
     onSubmit,
+    instrumentOptions,
+    genreOptions,
   };
 }

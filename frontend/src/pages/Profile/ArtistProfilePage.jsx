@@ -6,17 +6,18 @@ import { FaInstagram, FaFacebook, FaYoutube, FaSpotify } from "react-icons/fa";
 import { getUserById } from "../../services/UserService";
 import { useAuth } from "../../context/AuthContext";
 import { useLoadById } from "../../hooks/useLoadById";
-
-// ✅ importáld a modalt (útvonalat igazítsd, ahol tényleg van)
+import { useToast } from "../../context/ToastContext";
 import ReportModal from "../../components/common/ReportModal";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
-const toAbsUrl = (u) => (u && typeof u === "string" && u.startsWith("/uploads/") ? `${API_BASE}${u}` : u);
+const toAbsUrl = (u) =>
+  u && typeof u === "string" && u.startsWith("/uploads/") ? `${API_BASE}${u}` : u;
 
 export default function ArtistProfilePage() {
   const { id } = useParams();
   const { token, isAuth, userId } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -25,7 +26,6 @@ export default function ArtistProfilePage() {
 
   const artist = useMemo(() => {
     if (!row) return null;
-
     return {
       id: row.id,
       username: row.username ?? "",
@@ -34,9 +34,7 @@ export default function ArtistProfilePage() {
       city: row.city ?? "",
       instruments: Array.isArray(row.instruments)
         ? row.instruments
-        : row.instruments
-        ? [String(row.instruments)]
-        : [],
+        : row.instruments ? [String(row.instruments)] : [],
       styles: Array.isArray(row.styles) ? row.styles : row.styles ? [String(row.styles)] : [],
       band: row.band ?? null,
       description: row.description ?? null,
@@ -46,67 +44,47 @@ export default function ArtistProfilePage() {
 
   function handleSendMessage() {
     if (!artist) return;
-
-    if (!isAuth || !userId) {
-      navigate("/login");
-      return;
-    }
-
+    if (!isAuth || !userId) { navigate("/login"); return; }
     if (String(userId) === String(artist.id)) {
-      alert("You can't message yourself.");
+      showToast("You can't message yourself.", "error");
       return;
     }
-
     navigate(`/message/${artist.id}`);
   }
 
   function handleOpenReport() {
     if (!artist) return;
-
-    if (!isAuth || !userId) {
-      navigate("/login");
-      return;
-    }
-
+    if (!isAuth || !userId) { navigate("/login"); return; }
     if (String(userId) === String(artist.id)) {
-      alert("You can't report yourself.");
+      showToast("You can't report yourself.", "error");
       return;
     }
-
     setIsReportOpen(true);
   }
 
   if (loading) return <p style={{ padding: "40px" }}>Loading artist...</p>;
-  if (error) return <p style={{ padding: "40px", color: "red" }}>{String(error)}</p>;
+  if (error) return <div style={{ padding: "40px" }}><p style={{ color: "#b91c1c", fontWeight: 600 }}>{String(error)}</p></div>;
   if (!artist) return <p style={{ padding: "40px" }}>No artist data.</p>;
 
   const displayUsername = artist.username || "Unknown";
   const displayName = [artist.firstName, artist.lastName].filter(Boolean).join(" ");
-
   const instrumentsText = artist.instruments.length ? artist.instruments.join(", ") : "—";
   const stylesText = artist.styles.length ? artist.styles.join(", ") : "—";
 
   const localKey = `bander:user:avatar:${artist.id}`;
   let localAvatar = "";
-  try {
-    localAvatar = localStorage.getItem(localKey) || "";
-  } catch {
-    localAvatar = "";
-  }
+  try { localAvatar = localStorage.getItem(localKey) || ""; } catch { localAvatar = ""; }
 
   const avatarSrc = toAbsUrl(artist.profileImageUrl) || localAvatar || avatarFallback;
 
   return (
     <div className="artist-profile-page">
-      {/* LEFT */}
       <div className="artist-profile-left">
         <div className="artist-card">
           <img src={avatarSrc} alt={displayUsername} className="artist-avatar" />
           <h3 className="artist-username">{displayUsername}</h3>
-
           <p className="artist-meta">{displayName || "—"}</p>
           <p className="artist-meta">City: {artist.city || "—"}</p>
-
           <p className="artist-meta">Instrument(s): {instrumentsText}</p>
           <p className="artist-meta">Styles: {stylesText}</p>
         </div>
@@ -115,9 +93,8 @@ export default function ArtistProfilePage() {
           Send a message
         </button>
 
-        <br></br>
+        <br />
 
-        {/* ✅ REPORT BUTTON */}
         <button className="report-btn" onClick={handleOpenReport}>
           Report
         </button>
@@ -133,13 +110,11 @@ export default function ArtistProfilePage() {
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="artist-profile-right">
         <h3>Description</h3>
         <p className="artist-description">{artist.description || "—"}</p>
       </div>
 
-      {/* ✅ MODAL */}
       {isReportOpen && (
         <ReportModal
           targetType="user"

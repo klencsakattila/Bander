@@ -1,12 +1,56 @@
-/* Layout */
+/* ===================================
+   LAYOUT
+=================================== */
 .adm-shell {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: #fbf2e6;
   color: #1f2937;
+  position: relative;
 }
 
+/* ===================================
+   HAMBURGER (mobile only)
+=================================== */
+.adm-hamburger {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.adm-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #1f2937;
+  border-radius: 2px;
+}
+
+/* ===================================
+   OVERLAY (mobile)
+=================================== */
+.adm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+}
+
+/* ===================================
+   SIDEBAR
+=================================== */
 .adm-sidebar {
   position: sticky;
   top: 0;
@@ -17,6 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  z-index: 100;
 }
 
 .adm-brand {
@@ -31,6 +76,7 @@
 .adm-logo {
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   border-radius: 12px;
   background: #1fa08a;
   box-shadow: 0 10px 20px rgba(31,160,138,0.25);
@@ -60,6 +106,7 @@
   background: transparent;
   cursor: pointer;
   font-weight: 600;
+  font-size: 14px;
 }
 
 .adm-nav-item:hover {
@@ -81,42 +128,51 @@
 .adm-hint {
   font-weight: 800;
   margin-bottom: 6px;
+  font-size: 13px;
 }
 
 .adm-hint-text {
   font-size: 12px;
   opacity: 0.75;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
-/* Main */
+/* ===================================
+   MAIN
+=================================== */
 .adm-main {
   padding: 22px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .adm-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .adm-h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 24px;
+  font-weight: 900;
   letter-spacing: -0.2px;
 }
 
 .adm-p {
   margin: 6px 0 0;
   opacity: 0.75;
+  font-size: 14px;
 }
 
 .adm-header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .adm-chip {
@@ -125,9 +181,12 @@
   border-radius: 999px;
   background: rgba(0,0,0,0.05);
   border: 1px solid rgba(0,0,0,0.08);
+  white-space: nowrap;
 }
 
-/* Stats */
+/* ===================================
+   STATS
+=================================== */
 .adm-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -139,7 +198,7 @@
   background: #ffffff;
   border: 1px solid rgba(0,0,0,0.08);
   border-radius: 18px;
-  padding: 14px 14px;
+  padding: 16px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
 }
 
@@ -152,29 +211,35 @@
   font-size: 12px;
   opacity: 0.7;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .adm-stat-value {
-  margin-top: 6px;
-  font-size: 22px;
+  margin-top: 8px;
+  font-size: 28px;
   font-weight: 900;
 }
 
-/* Tabs */
+/* ===================================
+   TABS
+=================================== */
 .adm-tabs {
   display: flex;
   gap: 8px;
   margin: 6px 0 12px;
+  flex-wrap: wrap;
 }
 
 .adm-tab {
-  padding: 10px 12px;
+  padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,0.10);
   background: rgba(255,255,255,0.7);
   cursor: pointer;
   font-weight: 800;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .adm-tab.is-active {
@@ -182,7 +247,9 @@
   border-color: rgba(31,160,138,0.35);
 }
 
-/* Card */
+/* ===================================
+   CARD
+=================================== */
 .adm-card {
   background: #ffffff;
   border: 1px solid rgba(0,0,0,0.08);
@@ -192,41 +259,41 @@
 }
 
 .adm-card-head {
-  padding: 16px 16px 10px;
+  padding: 16px;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid rgba(0,0,0,0.06);
+  flex-wrap: wrap;
 }
 
 .adm-h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
 }
 
 .adm-muted {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 12px;
   opacity: 0.7;
+  line-height: 1.4;
 }
 
-.adm-loading,
-.adm-error {
-  padding: 16px;
+.adm-loading {
+  padding: 20px 16px;
+  opacity: 0.75;
 }
 
-.adm-error {
-  color: #b91c1c;
-  background: rgba(185, 28, 28, 0.06);
-}
-
-/* Filters */
+/* ===================================
+   FILTERS
+=================================== */
 .adm-filters {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .adm-input,
@@ -237,10 +304,12 @@
   border: 1px solid rgba(0,0,0,0.12);
   background: #fff;
   outline: none;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
 .adm-input {
-  width: min(360px, 48vw);
+  width: min(320px, 100%);
 }
 
 .adm-input:focus,
@@ -249,33 +318,52 @@
   box-shadow: 0 0 0 4px rgba(31,160,138,0.14);
 }
 
-/* Table */
+/* ===================================
+   TABLE
+=================================== */
 .adm-table-wrap {
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .adm-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .adm-table th,
 .adm-table td {
-  padding: 12px 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(0,0,0,0.06);
   text-align: left;
-  white-space: nowrap;
 }
 
 .adm-table th {
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 11px;
+  opacity: 0.7;
   font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.adm-subject-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-date-cell {
+  white-space: nowrap;
+  font-size: 12px;
 }
 
 .adm-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
   font-weight: 700;
+  font-size: 13px;
 }
 
 .adm-th-right,
@@ -285,56 +373,66 @@
 
 .adm-row-actions {
   display: inline-flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .adm-empty {
-  padding: 18px;
+  padding: 24px;
   text-align: center;
-  opacity: 0.7;
+  opacity: 0.6;
+  font-size: 14px;
 }
 
-/* Pills */
+/* ===================================
+   STATUS PILLS
+=================================== */
 .adm-pill {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   border: 1px solid rgba(0,0,0,0.10);
+  white-space: nowrap;
 }
 
 .adm-pill.is-amber {
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245,158,11,0.14);
+  border-color: rgba(245,158,11,0.25);
 }
 
 .adm-pill.is-green {
-  background: rgba(34, 197, 94, 0.14);
-  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(34,197,94,0.14);
+  border-color: rgba(34,197,94,0.25);
 }
 
 .adm-pill.is-gray {
-  background: rgba(107, 114, 128, 0.14);
-  border-color: rgba(107, 114, 128, 0.25);
+  background: rgba(107,114,128,0.14);
+  border-color: rgba(107,114,128,0.25);
 }
 
-/* Buttons */
+/* ===================================
+   BUTTONS
+=================================== */
 .adm-btn {
   height: 38px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 0;
   border-radius: 12px;
   background: #1fa08a;
   color: white;
   font-weight: 900;
+  font-size: 13px;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(31,160,138,0.24);
+  box-shadow: 0 8px 20px rgba(31,160,138,0.24);
+  white-space: nowrap;
 }
 
 .adm-btn:hover {
-  filter: brightness(0.98);
+  filter: brightness(0.95);
 }
 
 .adm-btn:disabled {
@@ -350,58 +448,123 @@
   border: 1px solid rgba(0,0,0,0.10);
 }
 
+.adm-btn-danger {
+  background: #dc2626;
+  box-shadow: 0 8px 20px rgba(220,38,38,0.24);
+}
+
 .adm-btn-small {
-  height: 34px;
-  padding: 0 12px;
+  height: 32px;
+  padding: 0 10px;
   border-radius: 10px;
   font-size: 12px;
 }
 
-/* Actions grid */
+/* ===================================
+   MANUAL ACTIONS GRID
+=================================== */
 .adm-actions-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
 }
 
 .adm-form {
-  padding: 14px 16px 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.adm-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
+.adm-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .adm-form-group label {
-  display: block;
   font-size: 12px;
   font-weight: 900;
   opacity: 0.8;
-  margin-bottom: 6px;
 }
 
-/* Responsive */
+/* ===================================
+   RESPONSIVE — TABLET
+=================================== */
 @media (max-width: 980px) {
-  .adm-shell {
-    grid-template-columns: 1fr;
-  }
-  .adm-sidebar {
-    position: relative;
-    height: auto;
-  }
   .adm-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ===================================
+   RESPONSIVE — MOBILE
+=================================== */
+@media (max-width: 700px) {
+  .adm-hamburger {
+    display: flex;
+  }
+
+  .adm-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 260px;
+    height: 100vh;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+
+  .adm-sidebar.is-open {
+    left: 0;
+  }
+
+  .adm-overlay {
+    display: block;
+  }
+
+  .adm-main {
+    padding: 16px;
+    padding-top: 60px;
+  }
+
+  .adm-h1 {
+    font-size: 20px;
+  }
+
+  .adm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .adm-stat-value {
+    font-size: 22px;
+  }
+
+  .adm-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adm-input {
+    width: 100%;
+  }
+
+  .adm-card-head {
+    flex-direction: column;
+  }
+
   .adm-actions-grid {
     grid-template-columns: 1fr;
   }
-  .adm-form-row {
-    grid-template-columns: 1fr;
-  }
-  .adm-input {
-    width: 100%;
+
+  .adm-row-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
   }
 }

@@ -10,23 +10,18 @@ function fileToDataUrl(file) {
   });
 }
 
-/**
- * ImageUploadField
- * - works without backend: stores DataURL in localStorage (optional)
- * - returns `file` + `previewUrl` to parent via onChange
- */
 export default function ImageUploadField({
   label,
   initialUrl,
-  storageKey, // e.g. "bander:user:avatar:8"
-  onChange, // ({ file, previewUrl }) => void
-  aspect = "1 / 1", // css aspect-ratio
+  storageKey,
+  onChange,
+  onError,  // (message: string) => void  — caller handles toast/alert
+  aspect = "1 / 1",
   helpText,
 }) {
   const inputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
-  // decide initial preview:
   const bootUrl = useMemo(() => {
     if (storageKey) {
       const cached = localStorage.getItem(storageKey);
@@ -39,19 +34,22 @@ export default function ImageUploadField({
     setPreviewUrl(bootUrl);
   }, [bootUrl]);
 
+  function reportError(msg) {
+    if (typeof onError === "function") onError(msg);
+    else console.warn("[ImageUploadField]", msg);
+  }
+
   async function handlePick(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // basic guard
     if (!file.type.startsWith("image/")) {
-      alert("Please choose an image file.");
+      reportError("Please choose an image file.");
       e.target.value = "";
       return;
     }
-    // optional: size guard (e.g. 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image is too large. Please choose a file under 5MB.");
+      reportError("Image is too large. Please choose a file under 5MB.");
       e.target.value = "";
       return;
     }
@@ -85,22 +83,12 @@ export default function ImageUploadField({
         </div>
 
         <div className="img-upload-actions">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePick}
-          />
+          <input ref={inputRef} type="file" accept="image/*" onChange={handlePick} />
 
           <div className="img-upload-buttons">
-            <button
-              type="button"
-              className="img-btn"
-              onClick={() => inputRef.current?.click()}
-            >
+            <button type="button" className="img-btn" onClick={() => inputRef.current?.click()}>
               Choose file
             </button>
-
             <button
               type="button"
               className="img-btn danger"

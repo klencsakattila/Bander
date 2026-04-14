@@ -1,17 +1,14 @@
 import "./EditProfileSettings.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useEditProfileSettings } from "../../hooks/useUser";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import ImageUploadField from "../../components/ImageUploadField";
 import { useAuth } from "../../context/AuthContext";
-import { getAllInstruments } from "../../services/InstrumentService";
-import { getAllGenres } from "../../services/GenreService";
-import { MultiSelectDropdown } from "../../components/MultiSelectDropdown"; // adjust path
+import { MultiSelectDropdown } from "../../components/MultiSelectDropdown";
 import { uploadUserProfileImage } from "../../services/UploadService";
+import { useToast } from "../../context/ToastContext";
 
 export default function EditProfileSettings() {
-  // IMPORTANT:
-  // AuthContext-nek tudnia kell a logged-in user id-ját (pl. token decode-ból)
   const {
     loading,
     error,
@@ -21,22 +18,29 @@ export default function EditProfileSettings() {
     fullName,
     onChange,
     onSubmit,
+    instrumentOptions,
+    genreOptions,
   } = useEditProfileSettings();
+
   const { userId } = useAuth();
-  const [instrumentOptions, setInstrumentOptions] = useState([]);
-  const [genreOptions, setGenreOptions] = useState([]);
-  const [optionsError, setOptionsError] = useState("");
-  const [avatarFile, setAvatarFile] = useState(null);
+  const { showToast } = useToast();
+
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(""); // store server URL after upload
 
-  // Read token the same way your services expect it
-  const token = useMemo(() => {
-    // change this if you store token differently
-    return localStorage.getItem("token") || "";
-  }, []);
+  const token = useMemo(() => localStorage.getItem("token") || "", []);
 
+  // Show success/error as toasts whenever they change
+  useMemo(() => {
+    if (success) showToast(success, "success");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success]);
+
+  useMemo(() => {
+    if (error) showToast(String(error?.message || error), "error");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
 
   const parseCsvIds = (value) =>
     String(value || "")
@@ -44,58 +48,23 @@ export default function EditProfileSettings() {
       .map((x) => x.trim())
       .filter(Boolean);
 
-  const selectedInstrumentIds = useMemo(
-    () => parseCsvIds(form.instruments),
-    [form.instruments]
-  );
-    const selectedGenreIds = useMemo(() => parseCsvIds(form.styles), [form.styles]);
-  
+  const selectedInstrumentIds = useMemo(() => parseCsvIds(form.instruments), [form.instruments]);
+  const selectedGenreIds = useMemo(() => parseCsvIds(form.styles), [form.styles]);
+
   const setCsvToForm = (field) => (ids) => {
     const csv = ids.join(",");
     onChange(field)({ target: { value: csv } });
   };
 
-  useEffect(() => {
-    let alive = true;
-
-    async function loadOptions() {
-      const instRes = await getAllInstruments(token);
-      const genreRes = await getAllGenres(token);
-
-      if (typeof instRes === "string") {
-        throw new Error(`Instruments API returned non-JSON: ${instRes.slice(0, 80)}`);
-      }
-      if (typeof genreRes === "string") {
-        throw new Error(`Genres API returned non-JSON: ${genreRes.slice(0, 80)}`);
-      }
-
-      const instruments = Array.isArray(instRes) ? instRes : instRes?.data ?? [];
-      const genres = Array.isArray(genreRes) ? genreRes : genreRes?.data ?? [];
-
-      if (alive) {
-        setInstrumentOptions(instruments);
-        setGenreOptions(genres);
-      }
-    }
-
-    loadOptions();
-    return () => {
-      alive = false;
-    };
-  }, [token]);
-
-  // Map selected IDs -> labels for the left profile card
+  // Map selected IDs -> labels for the profile card
   const getLabelById = (options, id) => {
     const found = options.find((o) => String(o.id) === String(id));
-    // fallback: if API uses different keys
     return found?.name || found?.title || found?.label || id;
   };
 
   const selectedInstrumentLabels = useMemo(() => {
     if (!selectedInstrumentIds.length) return "—";
-    return selectedInstrumentIds
-      .map((id) => getLabelById(instrumentOptions, id))
-      .join(", ");
+    return selectedInstrumentIds.map((id) => getLabelById(instrumentOptions, id)).join(", ");
   }, [selectedInstrumentIds, instrumentOptions]);
 
   const selectedGenreLabels = useMemo(() => {
@@ -104,16 +73,14 @@ export default function EditProfileSettings() {
   }, [selectedGenreIds, genreOptions]);
 
   const idsToNames = (ids, options) =>
-  (ids || [])
-    .map((id) => options.find((o) => String(o.id) === String(id)))
-    .map((o) => o?.name ?? o?.title ?? o?.label)
-    .filter(Boolean);
+    (ids || [])
+      .map((id) => options.find((o) => String(o.id) === String(id)))
+      .map((o) => o?.name ?? o?.title ?? o?.label)
+      .filter(Boolean);
 
   const handleSubmit = (e) => {
     const instrumentsNames = idsToNames(selectedInstrumentIds, instrumentOptions);
     const stylesNames = idsToNames(selectedGenreIds, genreOptions);
-  
-    // 👉 extra mezők átadása a hooknak
     return onSubmit(e, {
       instruments: instrumentsNames,
       styles: stylesNames,
@@ -121,20 +88,7 @@ export default function EditProfileSettings() {
     });
   };
 
-    const avatarStorageKey = useMemo(() => {
-  // stable key so it persists per user
-    return userId ? `bander:user:avatar:${userId}` : "bander:user:avatar:guest";
-  }, [userId]);
-  const storedAvatar = useMemo(() => {
-    try {
-      return avatarStorageKey ? localStorage.getItem(avatarStorageKey) : "";
-    } catch {
-      return "";
-    }
-  },   [avatarStorageKey]);
-
   if (loading) return <p style={{ padding: 40 }}>Loading profile...</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{String(error?.message || error)}</p>;
 
   return (
     <div className="profile-settings-page">
@@ -150,7 +104,6 @@ export default function EditProfileSettings() {
         <p className="profile-label">Full Name</p>
         <p className="profile-text">{fullName}</p>
 
-        {/* UI-only (not stored in DB currently) */}
         <p className="profile-label">Description for the artist</p>
         <p className="profile-text">{form.description || "—"}</p>
 
@@ -160,7 +113,6 @@ export default function EditProfileSettings() {
         <p className="profile-label">Style(s)</p>
         <p className="profile-text">{selectedGenreLabels}</p>
 
-        {/* DB fields */}
         <p className="profile-label">City</p>
         <p className="profile-text">{form.city || "—"}</p>
 
@@ -173,35 +125,19 @@ export default function EditProfileSettings() {
         <div className="form-grid">
           <div className="form-group">
             <label>Name</label>
-            <input
-              value={form.first_name}
-              onChange={onChange("first_name")}
-              type="text"
-              placeholder="Value"
-            />
+            <input value={form.first_name} onChange={onChange("first_name")} type="text" placeholder="First name" />
           </div>
 
           <div className="form-group">
             <label>Username</label>
-            <input
-              value={form.username}
-              onChange={onChange("username")}
-              type="text"
-              placeholder="Value"
-            />
+            <input value={form.username} onChange={onChange("username")} type="text" placeholder="Username" />
           </div>
 
           <div className="form-group">
             <label>Surname</label>
-            <input
-              value={form.last_name}
-              onChange={onChange("last_name")}
-              type="text"
-              placeholder="Value"
-            />
+            <input value={form.last_name} onChange={onChange("last_name")} type="text" placeholder="Last name" />
           </div>
 
-          {/* UI-only -> MULTI-SELECT dropdown */}
           <div className="form-group">
             <MultiSelectDropdown
               label="Instrument(s)"
@@ -214,15 +150,9 @@ export default function EditProfileSettings() {
 
           <div className="form-group">
             <label>Email</label>
-            <input
-              value={form.email}
-              onChange={onChange("email")}
-              type="email"
-              placeholder="Value"
-            />
+            <input value={form.email} onChange={onChange("email")} type="email" placeholder="Email" />
           </div>
 
-          {/* UI-only -> MULTI-SELECT dropdown */}
           <div className="form-group">
             <MultiSelectDropdown
               label="Style(s)"
@@ -243,75 +173,54 @@ export default function EditProfileSettings() {
             />
           </div>
 
-          {/* UI-only */}
           <div className="form-group">
             <label>Description</label>
-            <textarea
-              value={form.description}
-              onChange={onChange("description")}
-              placeholder="Value"
-            />
+            <textarea value={form.description} onChange={onChange("description")} placeholder="Describe yourself" />
           </div>
 
           <div className="form-group">
             <label>City</label>
-            <input
-              value={form.city}
-              onChange={onChange("city")}
-              type="text"
-              placeholder="Value"
-            />
+            <input value={form.city} onChange={onChange("city")} type="text" placeholder="City" />
           </div>
 
           <div className="form-group">
             <label>Birth date</label>
             <input
               value={form.birth_date}
-              onChange={onChange("birth_date")}
+              onChange={(e) => {
+                // Use the value directly as typed — no Date object conversion to avoid UTC shift
+                onChange("birth_date")({ target: { value: e.target.value } });
+              }}
               type="date"
             />
           </div>
+
           <div className="form-group" style={{ gridColumn: "1 / -1" }}>
             <ImageUploadField
               label="Profile picture"
-              initialUrl={form.profile_image_url || ""} // ✅ backend field
+              initialUrl={form.profile_image_url || ""}
               aspect="1 / 1"
               helpText="Uploads to the server instantly."
+              onError={(msg) => showToast(msg, "error")}
               onChange={async ({ file, previewUrl }) => {
                 setAvatarPreview(previewUrl);
-              
-                if (!file) {
-                  // optional: handle remove later with backend delete endpoint if you add one
-                  setAvatarUrl("");
-                  return;
-                }
-              
+                if (!file) { setAvatarUrl(""); return; }
                 try {
                   setUploadingAvatar(true);
-                
                   const result = await uploadUserProfileImage(userId, file, token);
                   setAvatarUrl(result.profile_image_url);
-                
                 } catch (err) {
-                  alert(err?.message || "Upload failed");
+                  showToast(err?.message || "Upload failed", "error");
                 } finally {
                   setUploadingAvatar(false);
                 }
               }}
-
             />
           </div>
         </div>
 
-        {optionsError && (
-          <p style={{ color: "red", marginTop: 12 }}>{optionsError}</p>
-        )}
-
-        {success && <p style={{ color: "green", marginTop: 12 }}>{success}</p>}
-        {error && <p style={{ color: "red", marginTop: 12 }}>{String(error?.message || error)}</p>}
-
-        <button className="save-btn" disabled={saving}>
-          {saving ? "Saving..." : "Save Details"}
+        <button className="save-btn" disabled={saving || uploadingAvatar}>
+          {saving ? "Saving..." : uploadingAvatar ? "Uploading..." : "Save Details"}
         </button>
       </form>
     </div>
