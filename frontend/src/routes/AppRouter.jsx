@@ -49,7 +49,6 @@ export default function AppRouter() {
         element={
           <AdminRoute>
             <AdminModerationPage />
-            <ReportsAdminPage />
           </AdminRoute>
         }
       />

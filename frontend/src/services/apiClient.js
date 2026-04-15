@@ -4,21 +4,20 @@ const looksLikeJson = (text) => /^[\s\r\n]*[{[]/.test(text);
 
 export async function apiFetch(path, { token, method = "GET", body } = {}) {
   const url = `${API_URL}${path}`;
-
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const headers = {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    // IMPORTANT: do NOT set Content-Type for FormData (browser sets boundary)
+    ...(token ? { "x-access-token": token } : {}),
     ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
   };
+
+  console.log("apiFetch token:", token);
+  console.log("apiFetch headers:", headers);
 
   const res = await fetch(url, {
     method,
     headers,
-    ...(body
-      ? { body: isFormData ? body : JSON.stringify(body) }
-      : {}),
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   const text = await res.text().catch(() => "");
@@ -34,7 +33,7 @@ export async function apiFetch(path, { token, method = "GET", body } = {}) {
     try {
       return JSON.parse(text);
     } catch {
-      // fall through
+      throw new Error(`Failed to parse JSON response from ${url}\n${text}`);
     }
   }
 

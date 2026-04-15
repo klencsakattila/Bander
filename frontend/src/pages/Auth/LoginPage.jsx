@@ -44,16 +44,14 @@ export default function LoginPage() {
 
       if (isFetchResponse) {
         if (!res.ok) {
-          const msg = await res.text().catch(() => "");
-          showToast(msg || "Invalid email or password", "error");
+          showToast("Invalid email or password", "error");
           return;
         }
         const contentType = res.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
           data = await res.json();
         } else {
-          const text = await res.text().catch(() => "");
-          throw new Error(text || "Login failed");
+          throw new Error("Login failed");
         }
       } else {
         if (res?.data !== undefined) {
@@ -62,7 +60,7 @@ export default function LoginPage() {
           data = res;
         }
         if (data?.error || data?.message === "Invalid credentials") {
-          showToast(data?.message || data?.error || "Invalid email or password", "error");
+          showToast("Invalid email or password", "error");
           return;
         }
       }
@@ -75,7 +73,7 @@ export default function LoginPage() {
       login(token);
       navigate("/", { replace: true });
     } catch (err) {
-      showToast(err?.message || "Server error. Please try again.", "error");
+      showToast( err.message + "Server error. Please try again.", "error");
     } finally {
       setLoading(false);
     }

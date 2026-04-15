@@ -56,8 +56,8 @@ export function updateReportStatus(id, report_status, token) {
 
   return apiFetch(`/reports/${id}`, {
     method: "PATCH",
-    body: { report_status },
     token,
+    body: { report_status },
   });
 }
 
