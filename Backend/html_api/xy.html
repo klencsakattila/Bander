@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bander API Documentation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bander API Endpoints Definition</h1>
+        </div>
+
+        <div class="section">
+            <h2>📝 API Endpoints</h2>
+            
+            <!-- USER ENDPOINTS -->
+            <h3>👤 User Endpoints</h3>
+            
+            <!-- POST /register -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/user/register</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Register a new user
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /user/register HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"email"</span>: <span class="json-string">"user@example.com"</span>,
+  <span class="json-key">"password"</span>: <span class="json-string">"securepassword123"</span>
+}
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (201 Created):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"token"</span>: <span class="json-string">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>User registered successfully, returns JWT token</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Incorrect data entered or request body is missing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>409</strong></td>
+                            <td>User with this email already exists</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating user or server-side error</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /login -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/user/login</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Sign in user with email and password
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /user/login HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"email"</span>: <span class="json-string">"user@example.com"</span>,
+  <span class="json-key">"password"</span>: <span class="json-string">"securepassword123"</span>
+}
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (201 Created):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"token"</span>: <span class="json-string">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Sign in successful, returns JWT token</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Incorrect data entered or request body is missing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>401</strong></td>
+                            <td>Incorrect email or password</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error during sign in</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /user/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/user/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get user data by ID with band, instruments, and musical styles
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /user/1 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"username"</span>: <span class="json-string">"PopcornLover21"</span>,
+  <span class="json-key">"email"</span>: <span class="json-string">"user@example.com"</span>,
+  <span class="json-key">"first_name"</span>: <span class="json-string">"John"</span>,
+  <span class="json-key">"last_name"</span>: <span class="json-string">"Doe"</span>,
+  <span class="json-key">"city"</span>: <span class="json-string">"Budapest"</span>,
+  <span class="json-key">"birth_date"</span>: <span class="json-string">"1990-01-15"</span>,
+  <span class="json-key">"is_admin"</span>: <span class="json-number">0</span>,
+  <span class="json-key">"band"</span>: { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"name"</span>: <span class="json-string">"The Band"</span> },
+  <span class="json-key">"instruments"</span>: [ { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"name"</span>: <span class="json-string">"Guitar"</span> } ],
+  <span class="json-key">"styles"</span>: [ { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"name"</span>: <span class="json-string">"Rock"</span> } ]
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns user data with related info</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Id is not valid</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>User not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching user data</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /user/limit/:limit -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/user/limit/:limit[/:offset]</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get limited list of users with pagination
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /user/limit/10 HTTP/1.1
+Host: Bander
+
+OR with offset:
+GET /user/limit/10/20 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  {
+    <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"username"</span>: <span class="json-string">"user1"</span>,
+    <span class="json-key">"email"</span>: <span class="json-string">"user1@example.com"</span>,
+    <span class="json-key">"first_name"</span>: <span class="json-string">"John"</span>
+  }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of users</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching users</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- PATCH /user/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method patch">PATCH</span>
+                    <span class="endpoint-path">/user/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Update user data
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+PATCH /user/1 HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"username"</span>: <span class="json-string">"NewUsername"</span>,
+  <span class="json-key">"first_name"</span>: <span class="json-string">"John"</span>,
+  <span class="json-key">"last_name"</span>: <span class="json-string">"Doe"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>User updated successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>User not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error updating user</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /user/:id/profile-image -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/user/:id/profile-image</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Upload user profile image
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /user/1/profile-image HTTP/1.1
+Host: Bander
+Content-Type: multipart/form-data
+
+file: [binary image data]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Image uploaded successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>User not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error uploading image</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- DELETE /user/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method delete">DELETE</span>
+                    <span class="endpoint-path">/user/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Delete user by ID
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+DELETE /user/1 HTTP/1.1
+Host: Bander
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>User deleted successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>User not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error deleting user</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- BAND ENDPOINTS -->
+            <h3>🎸 Band Endpoints</h3>
+
+            <!-- GET /band/limit/:limit -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/band/limit/:limit[/:offset]</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get limited list of bands with pagination
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /band/limit/10 HTTP/1.1
+Host: Bander
+
+OR with offset:
+GET /band/limit/10/20 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  {
+    <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"name"</span>: <span class="json-string">"The Band"</span>,
+    <span class="json-key">"city"</span>: <span class="json-string">"Budapest"</span>,
+    <span class="json-key">"profile_image_url"</span>: <span class="json-string">"https://example.com/band1.jpg"</span>,
+    <span class="json-key">"banner_image_url"</span>: <span class="json-string">"https://example.com/band1_banner.jpg"</span>,
+    <span class="json-key">"created_at"</span>: <span class="json-string">"2024-01-15T10:30:00Z"</span>
+  }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of bands</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching bands</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /band/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/band/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get band data by ID
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /band/1 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"name"</span>: <span class="json-string">"The Band"</span>,
+  <span class="json-key">"city"</span>: <span class="json-string">"Budapest"</span>,
+  <span class="json-key">"profile_image_url"</span>: <span class="json-string">"https://example.com/band1.jpg"</span>,
+  <span class="json-key">"banner_image_url"</span>: <span class="json-string">"https://example.com/band1_banner.jpg"</span>,
+  <span class="json-key">"created_at"</span>: <span class="json-string">"2024-01-15T10:30:00Z"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns band data</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid band id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Band not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching band</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /band/newband -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/band/newband</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new band
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /band/newband HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"name"</span>: <span class="json-string">"New Band"</span>,
+  <span class="json-key">"city"</span>: <span class="json-string">"Budapest"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Band created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid input data</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating band</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /band/post/limit/:limit -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/band/post/limit/:limit[/:offset]</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get limited list of latest band posts with pagination
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /band/post/limit/10 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  {
+    <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"band_id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"post_type"</span>: <span class="json-string">"announcement"</span>,
+    <span class="json-key">"post_message"</span>: <span class="json-string">"New album coming soon!"</span>,
+    <span class="json-key">"image_url"</span>: <span class="json-string">"https://example.com/post.jpg"</span>,
+    <span class="json-key">"created_at"</span>: <span class="json-string">"2024-01-15T10:30:00Z"</span>,
+    <span class="json-key">"band_name"</span>: <span class="json-string">"The Band"</span>
+  }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of band posts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching band posts</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /band/post -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/band/post</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new band post
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /band/post HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"band_id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"post_type"</span>: <span class="json-string">"announcement"</span>,
+  <span class="json-key">"post_message"</span>: <span class="json-string">"New album coming soon!"</span>,
+  <span class="json-key">"expires_at"</span>: <span class="json-string">"2024-12-31T23:59:59Z"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Band post created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid input data or missing required fields</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Band not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating band post</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GENRE ENDPOINTS -->
+            <h3>🎵 Genre Endpoints</h3>
+
+            <!-- GET /genre -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/genre</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get all genres/musical styles
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /genre HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"name"</span>: <span class="json-string">"Rock"</span> },
+  { <span class="json-key">"id"</span>: <span class="json-number">2</span>, <span class="json-key">"name"</span>: <span class="json-string">"Jazz"</span> },
+  { <span class="json-key">"id"</span>: <span class="json-number">3</span>, <span class="json-key">"name"</span>: <span class="json-string">"Pop"</span> }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of genres</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching genres</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /genre/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/genre/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get genre by ID
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /genre/1 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"name"</span>: <span class="json-string">"Rock"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns genre data</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid genre id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Genre not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching genre</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /genre -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/genre</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new genre (admin only)
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /genre HTTP/1.1
+Host: Bander
+Content-Type: application/json
+Authorization: Bearer [JWT_TOKEN]
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"name"</span>: <span class="json-string">"Blues"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Genre created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Genre name is required</td>
+                        </tr>
+                        <tr>
+                            <td><strong>409</strong></td>
+                            <td>Genre with this name already exists</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating genre</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- INSTRUMENT ENDPOINTS -->
+            <h3>🎹 Instrument Endpoints</h3>
+
+            <!-- GET /instrument -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/instrument</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get all instruments
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /instrument HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"name"</span>: <span class="json-string">"Guitar"</span> },
+  { <span class="json-key">"id"</span>: <span class="json-number">2</span>, <span class="json-key">"name"</span>: <span class="json-string">"Piano"</span> },
+  { <span class="json-key">"id"</span>: <span class="json-number">3</span>, <span class="json-key">"name"</span>: <span class="json-string">"Drums"</span> }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of instruments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching instruments</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /instrument -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/instrument</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new instrument (admin only)
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /instrument HTTP/1.1
+Host: Bander
+Content-Type: application/json
+Authorization: Bearer [JWT_TOKEN]
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"name"</span>: <span class="json-string">"Violin"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Instrument created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Instrument name is required</td>
+                        </tr>
+                        <tr>
+                            <td><strong>409</strong></td>
+                            <td>Instrument with this name already exists</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating instrument</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- THREAD ENDPOINTS -->
+            <h3>💬 Thread Endpoints</h3>
+
+            <!-- GET /thread/:id/:numberofmessages -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/thread/:id/:numberofmessages</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get thread with users and messages
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /thread/1/20 HTTP/1.1
+Host: Bander
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+{
+  <span class="json-key">"thread"</span>: { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"created_at"</span>: <span class="json-string">"2024-01-15T10:30:00Z"</span> },
+  <span class="json-key">"users"</span>: [ { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"username"</span>: <span class="json-string">"user1"</span> } ],
+  <span class="json-key">"messages"</span>: [ { <span class="json-key">"id"</span>: <span class="json-number">1</span>, <span class="json-key">"sender_id"</span>: <span class="json-number">1</span>, <span class="json-key">"message"</span>: <span class="json-string">"Hello!"</span> } ]
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns thread with users and messages</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid thread id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Thread not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching thread</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /thread -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/thread</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new thread between two users
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /thread HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"user1_id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"user2_id"</span>: <span class="json-number">2</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Thread already exists, returns existing thread</td>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Thread created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid user ids or users must be different</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>User not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating thread</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- MESSAGE ENDPOINTS -->
+            <h3>📬 Message Endpoints</h3>
+
+            <!-- POST /message -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/message</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new message in a thread
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /message HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"thread_id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"sender_id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Hello, this is my message!"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Message created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid input or missing required fields</td>
+                        </tr>
+                        <tr>
+                            <td><strong>403</strong></td>
+                            <td>Sender is not in this thread</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Thread or sender not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating message</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- DELETE /message/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method delete">DELETE</span>
+                    <span class="endpoint-path">/message/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Delete a message by ID
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+DELETE /message/1 HTTP/1.1
+Host: Bander
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Message deleted successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid message id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Message not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error deleting message</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- REPORT ENDPOINTS -->
+            <h3>🚩 Report Endpoints</h3>
+
+            <!-- GET /report -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/report</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get all reports (admin only)
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /report HTTP/1.1
+Host: Bander
+Authorization: Bearer [ADMIN_JWT_TOKEN]
+                    </div>
+                    <h4 style="margin-top: 20px;">Example Response (200 OK):</h4>
+                    <div class="code-block">
+[
+  {
+    <span class="json-key">"id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"reporter_id"</span>: <span class="json-number">1</span>,
+    <span class="json-key">"reported_user_id"</span>: <span class="json-number">2</span>,
+    <span class="json-key">"report_status"</span>: <span class="json-string">"open"</span>,
+    <span class="json-key">"report_message"</span>: <span class="json-string">"User is spamming"</span>,
+    <span class="json-key">"created_at"</span>: <span class="json-string">"2024-01-15T10:30:00Z"</span>
+  }
+]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns array of reports</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching reports</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- GET /report/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/report/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Get report by ID
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+GET /report/1 HTTP/1.1
+Host: Bander
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Successful query, returns report data</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid report id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Report not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error fetching report</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- POST /report -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/report</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Create a new report
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+POST /report HTTP/1.1
+Host: Bander
+Content-Type: application/json
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"reporter_id"</span>: <span class="json-number">1</span>,
+  <span class="json-key">"reported_user_id"</span>: <span class="json-number">2</span>,
+  <span class="json-key">"report_message"</span>: <span class="json-string">"User is spamming or violating rules"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>201</strong></td>
+                            <td>Report created successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid input or missing required fields</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Reporter or reported entity not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error creating report</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- DELETE /report/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method delete">DELETE</span>
+                    <span class="endpoint-path">/report/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Delete a report by ID (admin only)
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+DELETE /report/1 HTTP/1.1
+Host: Bander
+Authorization: Bearer [ADMIN_JWT_TOKEN]
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Report deleted successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid report id</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Report not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error deleting report</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- PATCH /report/:id -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method patch">PATCH</span>
+                    <span class="endpoint-path">/report/:id</span>
+                </div>
+                <div class="endpoint-description">
+                    <strong>Description:</strong> Update report status (admin only)
+                </div>
+                <div class="example-section">
+                    <h4>Example:</h4>
+                    <div class="code-block">
+                        <div class="code-title">HTTP Request:</div>
+PATCH /report/1 HTTP/1.1
+Host: Bander
+Content-Type: application/json
+Authorization: Bearer [ADMIN_JWT_TOKEN]
+                    </div>
+                    <div class="code-block">
+                        <div class="code-title">Request Body:</div>
+{
+  <span class="json-key">"report_status"</span>: <span class="json-string">"resolved"</span>
+}
+                    </div>
+                </div>
+                <div class="responses">
+                    <h4>📊 Possible Responses:</h4>
+                    <table>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><strong>200</strong></td>
+                            <td>Report status updated successfully</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400</strong></td>
+                            <td>Invalid status or input</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404</strong></td>
+                            <td>Report not found</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500</strong></td>
+                            <td>Error updating report</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <div class="section">
+            <h2>🔐 Authentication</h2>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 4px;">
+                <h3 style="color: #856404; margin-bottom: 15px;">JWT Token</h3>
+                <p><strong>Type:</strong> Bearer Token</p>
+                <p><strong>Location:</strong> Authorization Header</p>
+                <p><strong>Expiration:</strong> 2 hours</p>
+                <div class="code-block" style="margin-top: 15px;">
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                </div>
+            </div>
+        </div>
+
+    <button class="download-btn" onclick="window.print()">📄 PDF Download</button>
+</body>
+</html>
