@@ -10,8 +10,8 @@ router.post('/register', signUp);
 router.post('/login', signIn);
 
 // User routes
-router.get('/limit/:limit', verifyToken, getUsersLimit);
-router.get('/limit/:limit/:offset', verifyToken, getUsersLimit);
+router.get('/limit/:limit', getUsersLimit);
+router.get('/limit/:limit/:offset', getUsersLimit);
 router.get("/:id", verifyToken, getUserById);
 router.patch("/:id", verifyToken, updateUser);
 router.post("/:id/profile-image", verifyToken, createImageUpload("users").single("file"), uploadUserProfileImage);
