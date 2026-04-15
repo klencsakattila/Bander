@@ -86,7 +86,7 @@ export default function BandProfilePage() {
   }, [token, bandIdNum, demoBandPosts]);
 
   if (loading) return <p style={{ padding: "40px" }}>Loading band...</p>;
-  if (error) return <p style={{ padding: "40px", color: "red" }}>Band not found</p>;
+  if (error) return <div style={{ padding: "40px" }}><p style={{ color: "#b91c1c", fontWeight: 600 }}>Band not found</p></div>;
   if (!band) return <p style={{ padding: "40px" }}>No band data.</p>;
 
   const bandTitle = band.bandName ?? band.name ?? band.band_name ?? "Band";

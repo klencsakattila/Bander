@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import "./BandFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { getBandsLimit } from "../../services/BandService";
 import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { band as bandG } from "../../utils/fieldGetters";
@@ -12,6 +13,7 @@ import ReportModal from "../../components/common/ReportModal";
 const PAGE_SIZE = 10;
 
 export default function BandFinderPage() {
+  const { showToast } = useToast();
   const { token } = useAuth();
 
   const [bands, setBands] = useState([]);
@@ -58,7 +60,7 @@ export default function BandFinderPage() {
         setOffset(rows.length); // next offset
       }
     } catch (e) {
-      if (!cancelled) setError(e?.message || "Failed to load bands");
+      if (!cancelled) showToast(e?.message || "Failed to load bands", "error");
     } finally {
       if (!cancelled) setLoading(false);
     }
@@ -85,7 +87,7 @@ export default function BandFinderPage() {
       setHasMore(rows.length === PAGE_SIZE);
       setOffset((prev) => prev + rows.length);
     } catch (e) {
-      setError(e?.message || "Failed to load more bands");
+      showToast(e?.message || "Failed to load more bands", "error");
     } finally {
       setLoadingMore(false);
     }
@@ -109,7 +111,7 @@ export default function BandFinderPage() {
   }, [bands, search, filters.city]);
 
   if (loading) return <p style={{ padding: 40 }}>Loading bands...</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
+  
 
   return (
     <div className="band-finder-page">

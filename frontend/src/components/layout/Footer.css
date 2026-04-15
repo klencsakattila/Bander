@@ -1,74 +1,105 @@
 /* =========================
-   FOOTER BASE (smaller)
+   FOOTER BASE
 ========================= */
 .footer {
   width: 100%;
   background-color: #FF892C;
-  padding: 25px 0;      /* reduced from 50px */
+  padding: 25px 0;
   display: flex;
   justify-content: center;
 }
 
-/* Centered content */
 .footer-container {
   width: 100%;
   max-width: 1400px;
-  padding: 0 30px;      /* slightly smaller padding */
+  padding: 0 30px;
   display: flex;
   justify-content: space-between;
-  align-items: center;  /* center vertically */
+  align-items: center;
   flex-wrap: wrap;
+  gap: 16px;
   color: #264653;
+  box-sizing: border-box;
 }
 
 /* =========================
-   LEFT SIDE (smaller)
+   LEFT SIDE
 ========================= */
 .footer-left {
   flex: 1;
-  min-width: 200px;
+  min-width: 160px;
 }
 
 .footer-logo {
-  font-size: 22px;     /* smaller title */
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 10px; /* reduced space */
+  margin: 0 0 10px 0;
 }
 
-/* Social icons smaller */
 .footer-socials {
   display: flex;
   gap: 10px;
-  font-size: 16px;     /* reduced */
+  font-size: 16px;
 }
 
 /* =========================
-   RIGHT SIDE (smaller)
+   RIGHT SIDE
 ========================= */
 .footer-links {
   display: flex;
-  gap: 40px;           /* reduced from 80px */
-  flex: 2;
+  gap: 40px;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  min-width: 250px;     /* reduced */
 }
 
 .footer-column h3 {
-  font-size: 16px;     /* reduced */
-  margin-bottom: 4px;  /* reduced spacing */
+  font-size: 16px;
+  margin: 0;
+}
+
+.footer-column a {
+  color: #264653;
+  text-decoration: none;
+}
+
+.footer-column a:hover {
+  text-decoration: underline;
 }
 
 /* =========================
-   RESPONSIVE (adjusted)
+   RESPONSIVE
 ========================= */
-@media (max-width: 900px) {
+@media (max-width: 600px) {
+  .footer {
+    padding: 20px 0;
+  }
+
   .footer-container {
     flex-direction: column;
-    gap: 15px;         /* smaller stack spacing */
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0 20px;
+  }
+
+  .footer-left {
+    width: 100%;
   }
 
   .footer-links {
     justify-content: flex-start;
-    gap: 20px;         /* reduced */
+    gap: 20px;
+    width: 100%;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .footer-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .footer-links {
+    justify-content: flex-start;
+    gap: 24px;
   }
 }

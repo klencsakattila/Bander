@@ -63,9 +63,9 @@ describe('Bander – bejelentkezés', () => {
   });
 
   it('TC-FE-007 – Login oldal betöltése', () => {
-    cy.get('input[type="email"]').should('exist');
-    cy.get('input[type="password"]').should('exist');
-    cy.contains(/Log in/i).should('exist');
+    cy.get('input[name="email"]').should('exist');
+    cy.get('input[name="password"]').should('exist');
+    cy.contains('button', /Log in/i).should('exist');
     cy.contains(/Get started/i).should('exist');
   });
 
@@ -77,18 +77,19 @@ describe('Bander – bejelentkezés', () => {
   });
 
   it('TC-FE-009 – Hibás hitelesítő adatok', () => {
-    cy.get('input[type="email"]').type('wrong@example.com');
-    cy.get('input[type="password"]').type('Wrong1234!');
+    cy.get('input[name="email"]').type('wrong@example.com');
+    cy.get('input[name="password"]').type('Wrong1234!');
     cy.get('.btn-primary').contains(/Log in/i).click();
 
     cy.get('.error-text').should('exist');
   });
 
   it('TC-FE-010 – Sikeres bejelentkezés UI', () => {
-    cy.get('input[type="email"]').type('demo@bander.test');
-    cy.get('input[type="password"]').type('Demo1234!');
+    cy.get('input[name="email"]').type('demo@bander.test');
+    cy.get('input[name="password"]').type('Demo1234!');
     cy.get('.btn-primary').contains(/Log in/i).click();
 
+    // Note: if demo@bander.test is not a valid user, .error-text will appear
     cy.get('.error-text').should('exist');
   });
 

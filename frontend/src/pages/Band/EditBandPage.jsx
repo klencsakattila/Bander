@@ -17,6 +17,7 @@ import {
   uploadBandBanner,
 } from "../../services/BandService";
 import { formatISODate } from "../../utils/date";
+import { useToast } from "../../context/ToastContext";
 
 function pickUrl(obj, keys) {
   for (const k of keys) {
@@ -55,6 +56,7 @@ export default function EditBandPage() {
   const bandId = id ? Number(id) : null;
 
   const { token, userId, isAuth } = useAuth();
+  const { showToast } = useToast();
   const isEditMode = Boolean(bandId);
 
   const demoBand = useMemo(
@@ -192,7 +194,7 @@ export default function EditBandPage() {
       }
     } catch (e) {
       console.error("loadBand error:", e);
-      if (!cancelled) setError(e?.message || "Failed to load band");
+      if (!cancelled) showToast(e?.message || "Failed to load band", "error");
     } finally {
       if (!cancelled) setLoading(false);
     }
@@ -280,15 +282,17 @@ export default function EditBandPage() {
         }
 
         setStatus("Band created!");
+      showToast("Band created!", "success");
         navigate(`/bands/manage/${newBandId}`, { replace: true });
       } else {
         await updateBand(bandId, { name, city }, token);
         setStatus("Saved!");
+      showToast("Saved!", "success");
       }
 
       setTimeout(() => setStatus(""), 1500);
     } catch (err) {
-      setError(err?.message || "Save failed");
+      showToast(err?.message || "Save failed", "error");
     } finally {
       setLoading(false);
     }
@@ -313,11 +317,12 @@ export default function EditBandPage() {
       );
 
       setStatus("Member added!");
+      showToast("Member added!", "success");
       setTimeout(() => setStatus(""), 1500);
 
       setMemberForm({ user_id: "", role: "member" });
     } catch (err) {
-      setError(err?.message || "Failed to add member");
+      showToast(err?.message || "Failed to add member", "error");
     } finally {
       setMemberLoading(false);
     }
@@ -348,6 +353,7 @@ export default function EditBandPage() {
       );
 
       setStatus("Event created!");
+      showToast("Event created!", "success");
       setTimeout(() => setStatus(""), 1500);
 
       setEventForm({ post_type: "announcement", post_message: "", expires_at: "" });
@@ -356,7 +362,7 @@ export default function EditBandPage() {
       const list = Array.isArray(postData) ? postData : [];
       setPosts(list.filter((p) => Number(p?.band_id) === Number(bandId)));
     } catch (err) {
-      setError(err?.message || "Failed to create event");
+      showToast(err?.message || "Failed to create event", "error");
     } finally {
       setEventLoading(false);
     }
@@ -383,8 +389,8 @@ export default function EditBandPage() {
   // ✅ Upload avatar
   async function handleUploadAvatar() {
     if (!isAuth) return navigate("/login");
-    if (!bandId) return setError("Create the band first, then upload images.");
-    if (!avatarFile) return setError("Pick an avatar image first.");
+    if (!bandId) return showToast("Create the band first, then upload images.", "error");
+    if (!avatarFile) return showToast("Pick an avatar image first.", "error");
 
     try {
       setUploadingAvatar(true);
@@ -403,6 +409,7 @@ export default function EditBandPage() {
 
       setBand((p) => ({ ...p, avatarUrl: url || avatarPreview || p.avatarUrl }));
       setStatus("Avatar uploaded!");
+      showToast("Avatar uploaded!", "success");
       await refreshBand();
 
       setAvatarFile(null);
@@ -413,7 +420,7 @@ export default function EditBandPage() {
 
       setTimeout(() => setStatus(""), 1500);
     } catch (err) {
-      setError(err?.message || "Avatar upload failed");
+      showToast(err?.message || "Avatar upload failed", "error");
     } finally {
       setUploadingAvatar(false);
     }
@@ -422,8 +429,8 @@ export default function EditBandPage() {
   // ✅ Upload banner
   async function handleUploadBanner() {
     if (!isAuth) return navigate("/login");
-    if (!bandId) return setError("Create the band first, then upload images.");
-    if (!bannerFile) return setError("Pick a banner image first.");
+    if (!bandId) return showToast("Create the band first, then upload images.", "error");
+    if (!bannerFile) return showToast("Pick a banner image first.", "error");
 
     try {
       setUploadingBanner(true);
@@ -442,6 +449,7 @@ export default function EditBandPage() {
 
       setBand((p) => ({ ...p, bannerUrl: url || bannerPreview || p.bannerUrl }));
       setStatus("Banner uploaded!");
+      showToast("Banner uploaded!", "success");
       await refreshBand();
 
 
@@ -453,7 +461,7 @@ export default function EditBandPage() {
 
       setTimeout(() => setStatus(""), 1500);
     } catch (err) {
-      setError(err?.message || "Banner upload failed");
+      showToast(err?.message || "Banner upload failed", "error");
     } finally {
       setUploadingBanner(false);
     }
@@ -501,8 +509,6 @@ export default function EditBandPage() {
 
 
   if (loading) return <p style={{ padding: 40 }}>Loading…</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
-
   const bandTitle = band?.name || form.name || (isEditMode ? "Band" : "Create a band");
 
   const bannerSrc = bannerPreview || band.bannerUrl || "";

@@ -4,6 +4,7 @@ import placeholder from "../assets/images/default-avatar.png";
 import placeholderEvent from "../assets/images/event-badge.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 import ArtistCard from "../components/common/NewArtistCard";
 import { getUsersLimit } from "../services/UserService";
@@ -11,6 +12,7 @@ import { getBandsLimit ,getLatestBandPosts } from "../services/BandService";
 
 export default function HomePage() {
   const { token, isAuth } = useAuth();
+  const { showToast } = useToast();
 
   const [artists, setArtists] = useState([]);
   const [bands, setBands] = useState([]);
@@ -35,7 +37,7 @@ export default function HomePage() {
       setBands(bandsData || []);
       setPosts(postsData || []);
     } catch (e) {
-      setError(e.message || "Failed to load homepage data");
+      showToast(e.message || "Failed to load homepage data", "error");
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,6 @@ export default function HomePage() {
 
 
   if (loading) return <p style={{ padding: 40 }}>Loading homepage...</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
 
   return (
     <div className="homepage">

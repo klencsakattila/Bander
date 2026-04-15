@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import "./ArtistFinderPage.css";
 import placeholder from "../../assets/images/default-avatar.png";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { getUsersLimit, getUserById } from "../../services/UserService";
 import { getAllGenres } from "../../services/GenreService";
 import { getAllInstruments } from "../../services/InstrumentService";
@@ -17,6 +18,7 @@ const toAbsUrl = (u) =>
 
 
 export default function ArtistFinderPage() {
+  const { showToast } = useToast();
   const { token } = useAuth();
   const LIMIT = 20;
 
@@ -133,7 +135,7 @@ export default function ArtistFinderPage() {
       // 🔥 hydrate
       hydrateUsers(rows);
     } catch (e) {
-      setError(e?.message || "Failed to load artists");
+      showToast(e?.message || "Failed to load artists", "error");
       setArtists([]);
       setOffset(0);
       setHasMore(false);
@@ -167,7 +169,7 @@ export default function ArtistFinderPage() {
       // 🔥 hydrate new rows
       hydrateUsers(rows);
     } catch (e) {
-      setError(e?.message || "Failed to load more artists");
+      showToast(e?.message || "Failed to load more artists", "error");
     } finally {
       setLoadingMore(false);
     }
@@ -264,7 +266,7 @@ export default function ArtistFinderPage() {
   // RENDER
   // ===============================
   if (loading) return <p style={{ padding: 40 }}>Loading artists...</p>;
-  if (error) return <p style={{ padding: 40, color: "red" }}>{error}</p>;
+  
 
   return (
     <div className="artist-finder-page">

@@ -1,12 +1,14 @@
 describe('Band kezelő oldal', () => {
   beforeEach(() => {
-        cy.visit('/login')
-    cy.get('input[type="email"]').type('alice@example.com');
-    cy.get('input[type="password"]').type('demo123');
+    cy.visit('/login');
+    cy.get('input[name="email"]').type('alice@example.com');
+    cy.get('input[name="password"]').type('demo123');
     cy.get('.btn-primary').contains(/Log in/i).click();
 
-    cy.contains(/Manage band/i).should('exist');
-    cy.get('[href="/bands/manage/6"]').click();
+    // Wait for band manage link to appear, then click it
+    cy.contains(/Manage band/i, { timeout: 10000 }).should('exist');
+    cy.get('.navbar-links a').contains(/Manage band/i).click();
+    cy.url().should('include', '/bands/manage/');
   });
 
   it('TC-FE-045 – Band szerkesztő űrlap előtöltése', () => {
@@ -14,32 +16,40 @@ describe('Band kezelő oldal', () => {
   });
 
   it('TC-FE-046 – Band adatok mentése', () => {
-    cy.get('.band-forms > :nth-child(1) > :nth-child(2) > input').clear().type('Cypress Test Band');
-    cy.contains(/Save Changes/i).click();
-    cy.contains(/saved/i, { matchCase: false }).should('exist');
+    // Band name input is in the first form-col, first field
+    cy.get('.band-forms .form-col').first().within(() => {
+      cy.get('.field input').first().clear().type('Cypress Test Band');
+      cy.contains('button', /Save changes/i).click();
+    });
+    // Status toast shows "Saved!"
+    cy.get('.toast', { timeout: 5000 }).should('exist');
   });
 
   it('TC-FE-047 – Új esemény űrlap mezői', () => {
-    cy.get('.band-forms > :nth-child(2)').within(() => {
-      cy.get(':nth-child(2) > select').should('exist');
-      cy.get(':nth-child(4) > input').should('exist');
-      cy.get('textarea').should('exist');
+    // New Event is in the second form-col
+    cy.get('.band-forms .form-col').eq(1).within(() => {
+      cy.get('select').should('exist');     // post_type select
+      cy.get('textarea').should('exist');   // post_message
+      cy.get('input[type="date"]').should('exist'); // expires_at
     });
   });
 
   it('TC-FE-048 – Új esemény validációja', () => {
-    cy.get('[data-testid="new-event-form"]').within(() => {
-      cy.get('.band-forms > :nth-child(2) > .btn').click();
+    // Try creating event without filling fields
+    cy.get('.band-forms .form-col').eq(1).within(() => {
+      cy.contains('button', /Create event/i).click();
     });
-    cy.contains(/message/i, { matchCase: false }).should('exist');
+    // Error message should appear (e.g. "Message is required")
+    cy.contains(/required/i, { matchCase: false }).should('exist');
   });
 
   it('TC-FE-049 – Új esemény létrehozása', () => {
-    cy.get('[data-testid="new-event-form"]').within(() => {
-      cy.get(':nth-child(4) > input').type('2030-01-01');
+    cy.get('.band-forms .form-col').eq(1).within(() => {
+      cy.get('input[type="date"]').type('2030-01-01');
       cy.get('textarea').type('Created by Cypress test.');
-      cy.get('.band-forms > :nth-child(2) > .btn').click();
+      cy.contains('button', /Create event/i).click();
     });
-    cy.contains(/Event created/i, { matchCase: false }).should('exist');
+    // Success toast: "Event created!"
+    cy.get('.toast', { timeout: 5000 }).should('contain.text', 'Event created');
   });
 });

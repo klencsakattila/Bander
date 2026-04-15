@@ -7,7 +7,7 @@ describe('Regisztráció', () => {
     cy.get('[name="email"]').should('exist');
     cy.get('[name="password1"]').should('exist');
     cy.get('[name="password2"]').should('exist');
-    cy.contains(/Sign up/i).should('exist');
+    cy.contains('button', /Sign up/i).should('exist');
   });
 
   it('TC-FE-013 – Kötelező mezők ellenőrzése', () => {
@@ -30,6 +30,7 @@ describe('Regisztráció', () => {
     cy.get('[name="password1"]').type('Password123!');
     cy.get('[name="password2"]').type('Password123!');
     cy.get('.btn-primary').contains(/Sign up/i).click();
-    cy.get('.form-grid > :nth-child(1)');
+    // After successful signup, navigates to /profile/settings with form-grid
+    cy.get('.form-grid', { timeout: 10000 }).should('exist');
   });
 });

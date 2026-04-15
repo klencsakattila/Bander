@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./MessagePage.css";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { createOrGetThread, getThreadById } from "../../services/ThreadService";
 import { createMessage } from "../../services/MessageService";
 import { getUserById } from "../../services/UserService";
@@ -10,6 +11,7 @@ import { getUserById } from "../../services/UserService";
 export default function MessagesPage() {
   const { userId: otherUserId } = useParams(); // other user id
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { token, isAuth, userId: myUserId } = useAuth();
   const [otherUser, setOtherUser] = useState(null);
 
@@ -59,7 +61,7 @@ export default function MessagesPage() {
         setThreadId(id);
       } catch (e) {
         if (!alive) return;
-        setError(String(e?.message || "Failed to create/load thread"));
+        showToast(e?.message || "Failed to create/load thread", "error");
       }
     }
 
@@ -101,7 +103,7 @@ export default function MessagesPage() {
         });
       } catch (e) {
         if (!alive) return;
-        setError(String(e?.message || "Failed to load messages"));
+        showToast(e?.message || "Failed to load messages", "error");
         setMessages([]);
       } finally {
         if (alive) setLoadingInitial(false);
@@ -234,7 +236,7 @@ export default function MessagesPage() {
 
       <main className="messages-wrapper">
         <section className="messages-panel">
-          {error && <div style={{ padding: "10px", color: "red" }}>{String(error)}</div>}
+          
 
           <div className="messages-list" ref={listRef} onScroll={onScroll}>
             {loadingOlder && (
