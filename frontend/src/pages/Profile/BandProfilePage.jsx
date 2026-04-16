@@ -26,7 +26,7 @@ export default function BandProfilePage() {
   const bandIdNum = Number(id);
   const { token } = useAuth();
 
-  const { data: rawBand, loading, error } = useLoadById(id, getBandById);
+  const { data: rawBand, loading, error } = useLoadById(id, (id) => getBandById(id, token), [token]);
   const [posts, setPosts] = useState([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -145,14 +145,9 @@ export default function BandProfilePage() {
             alt={bandTitle}
           />
 
-
           <div className="band-info-text">
             <h3>{bandTitle}</h3>
             <p>{bandCity}</p>
-
-            <p>Open spots: —</p>
-
-            <p>Open spots: —</p>
 
             <button
               className="band-report-btn"

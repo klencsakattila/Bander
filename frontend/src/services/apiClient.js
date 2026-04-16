@@ -11,9 +11,6 @@ export async function apiFetch(path, { token, method = "GET", body } = {}) {
     ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
   };
 
-  console.log("apiFetch token:", token);
-  console.log("apiFetch headers:", headers);
-
   const res = await fetch(url, {
     method,
     headers,

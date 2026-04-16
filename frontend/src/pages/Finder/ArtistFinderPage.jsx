@@ -328,19 +328,6 @@ export default function ArtistFinderPage() {
           </select>
 
           <label>Band</label>
-          <select
-            value={filters.band}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, band: e.target.value }))
-            }
-          >
-            <option value="">All</option>
-            {opts.bands.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
 
           <p style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
             Showing {filteredArtists.length} / {artists.length}{" "}

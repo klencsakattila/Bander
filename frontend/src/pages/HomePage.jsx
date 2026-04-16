@@ -64,12 +64,14 @@ export default function HomePage() {
       <section className="homepage-section">
         <h2>New Artists</h2>
         <div className="artists-grid">
-          {artists.map((a) => (
+          {console.log(artists)}
+           {
+          artists.map((a) => (
             <Link key={a.id} to={`/artist/${a.id}`} className="artist-link-wrapper">
               <ArtistCard
                 key={a.id}
                 id={a.id}
-                image={placeholder}
+                image={a.profile_image_url || placeholder}
                 username={a.username || a.userName}
                 description={`${a.first_name || a.firstName || ""} ${a.last_name || a.lastName || ""}`.trim() || "Artist"}
               />
@@ -95,7 +97,7 @@ export default function HomePage() {
             <Link to="/bands" className="see-all-btn">See all bands</Link>
           </div>
 
-          <img className="band-image" src={placeholder} alt="Band" />
+          <img className="band-image" src={bands[0]?.image || placeholder} alt="Band" />
         </div>
       </section>
 
