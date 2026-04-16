@@ -1077,3 +1077,125 @@ INSERT INTO band_members
 SELECT b.id, u.id, 'drums'
 FROM bands b JOIN users u
 WHERE b.name='Queen' AND u.username='roger_taylor';
+
+-- ======================================================
+-- Seed Data: Famous Musicians Instruments
+-- ======================================================
+
+-- Metallica
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='james_hetfield' AND i.name='Vocals'
+UNION ALL
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='james_hetfield' AND i.name='Guitar';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='lars_ulrich' AND i.name='Drums';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='kirk_hammett' AND i.name='Electric Guitar';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='robert_trujillo' AND i.name='Bass';
+
+-- Iron Maiden
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='bruce_dickinson' AND i.name='Vocals';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='steve_harris' AND i.name='Bass';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='dave_murray' AND i.name='Electric Guitar';
+
+-- Black Sabbath
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='ozzy_osbourne' AND i.name='Vocals';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='tony_iommi' AND i.name='Electric Guitar';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='geezer_butler' AND i.name='Bass';
+
+-- Slayer
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='tom_araya' AND i.name='Bass'
+UNION ALL
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='tom_araya' AND i.name='Vocals';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='kerry_king' AND i.name='Electric Guitar';
+
+-- Slipknot
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='corey_taylor' AND i.name='Vocals';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='mick_thomson' AND i.name='Electric Guitar';
+
+-- Nirvana
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='kurt_cobain' AND i.name='Vocals'
+UNION ALL
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='kurt_cobain' AND i.name='Guitar';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='dave_grohl' AND i.name='Drums';
+
+-- Queen
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='freddie_mercury' AND i.name='Vocals'
+UNION ALL
+SELECT u.id, i.id, 'intermediate'
+FROM users u JOIN instruments i
+WHERE u.username='freddie_mercury' AND i.name='Keys';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='brian_may' AND i.name='Guitar';
+
+INSERT INTO user_instruments (user_id, instrument_id, skill_level)
+SELECT u.id, i.id, 'advanced'
+FROM users u JOIN instruments i
+WHERE u.username='roger_taylor' AND i.name='Drums';
