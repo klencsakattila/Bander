@@ -252,6 +252,8 @@ VALUES
 INSERT INTO users (username,email,password_hash,first_name,last_name,city,birth_date,is_admin) VALUES
 ('admin','admin@example.com','demo123','Admin','User','Budapest','1980-01-01',1);
 
+UPDATE users SET profile_image_url = CONCAT('https://i.pravatar.cc/300?u=', id);
+
 INSERT INTO bands (name,city) VALUES
 ('The Rockets','Budapest'),
 ('Blue Notes','Szeged'),
