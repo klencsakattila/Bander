@@ -55,7 +55,7 @@ export async function signIn(req: any, res: any) {
             // Ignore close errors
         }
         if(!res.headersSent){
-            res.status(500).send('Error during sign in.');
+            res.status(500).send('Error during sign in. '+ err);
         }
     }
 };

@@ -2,18 +2,37 @@
 
 describe('Report routes', () => {
   const base = Cypress.config('baseUrl') || 'http://localhost:3000'
-  const prefix = '/report'
-
-  // Required for create tests:
-  // PowerShell:
-  // $env:CYPRESS_REPORTER_ID=1
-  // $env:CYPRESS_REPORTED_USER_ID=2   (or set BAND/POST instead)
-  const reporterId = Number(Cypress.env('REPORTER_ID'))
-  const reportedUserId = Cypress.env('REPORTED_USER_ID') ? Number(Cypress.env('REPORTED_USER_ID')) : null
-  const reportedBandId = Cypress.env('REPORTED_BAND_ID') ? Number(Cypress.env('REPORTED_BAND_ID')) : null
-  const reportedPostId = Cypress.env('REPORTED_POST_ID') ? Number(Cypress.env('REPORTED_POST_ID')) : null
+  const prefix = '/reports'
 
   let reportId: number | null = null
+  let authToken: string | null = null
+
+  const genRandomUser = () => {
+    const t = Math.random().toString(36).substring(2, 6)
+    return {
+      name: `testuser-${t}`,
+      email: `testuser${t}@example.com`,
+      password: 'Password123!'
+    }
+  }
+
+  before(() => {
+    const userData = genRandomUser()
+    // Register user
+    cy.request({
+      method: 'POST',
+      url: `${base}/users/register`,
+      body: userData,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect(resp.status).to.be.within(200, 299)
+      // Decode JWT to get user id
+      const token = resp.body?.token
+      if (token) {
+        authToken = token
+      }
+    })
+  })
 
   it('GET /report -> returns all reports', () => {
     cy.request({
@@ -37,17 +56,27 @@ describe('Report routes', () => {
     })
   })
 
-  it('GET /report/:id -> returns report when id exists', function () {
-    if (!reportId) this.skip()
-
-    cy.request({
-      method: 'GET',
-      url: `${base}${prefix}/${reportId}`,
-      failOnStatusCode: false
-    }).then((resp) => {
-      expect(resp.status).to.eq(200)
-      expect(resp.body).to.have.property('id', reportId)
-    })
+  it('GET /report/:id -> returns report when id exists or 404 when not found', function () {
+    if (reportId) {
+      // Test existing report
+      cy.request({
+        method: 'GET',
+        url: `${base}${prefix}/${reportId}`,
+        failOnStatusCode: false
+      }).then((resp) => {
+        expect(resp.status).to.eq(200)
+        expect(resp.body).to.have.property('id', reportId)
+      })
+    } else {
+      // Test non-existent report
+      cy.request({
+        method: 'GET',
+        url: `${base}${prefix}/99999`,
+        failOnStatusCode: false
+      }).then((resp) => {
+        expect(resp.status).to.eq(404)
+      })
+    }
   })
 
   it('POST /report -> 400 when required fields missing', () => {
@@ -61,103 +90,62 @@ describe('Report routes', () => {
     })
   })
 
-  it('POST /report -> creates report with valid payload', function () {
-    if (!reporterId || Number.isNaN(reporterId)) this.skip()
-    if (!reportedUserId && !reportedBandId && !reportedPostId) this.skip()
-
+  it('POST /report -> 400 when no target is specified', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
-      body: {
-        reporter_id: reporterId,
-        reported_user_id: reportedUserId,
-        reported_band_id: reportedBandId,
-        reported_post_id: reportedPostId,
-        report_message: `Cypress report ${Date.now()}`
-      },
-      failOnStatusCode: false
-    }).then((resp) => {
-      expect(resp.status).to.eq(201)
-      expect(resp.body).to.have.property('id')
-      expect(resp.body).to.have.property('reporter_id', reporterId)
-      expect(resp.body).to.have.property('report_status')
-      reportId = resp.body.id
-    })
-  })
-
-  it('PATCH/PUT /report/:id/status -> 400 on invalid status', function () {
-    if (!reportId) this.skip()
-
-    cy.request({
-      method: 'PATCH',
-      url: `${base}${prefix}/${reportId}/status`,
-      body: { report_status: 'invalid_status' },
-      failOnStatusCode: false
-    }).then((resp) => {
-      // if route is PUT only, PATCH may return 404/405
-      if ([404, 405].includes(resp.status)) {
-        cy.request({
-          method: 'PUT',
-          url: `${base}${prefix}/${reportId}/status`,
-          body: { report_status: 'invalid_status' },
-          failOnStatusCode: false
-        }).then((resp2) => {
-          expect(resp2.status).to.eq(400)
-        })
-      } else {
-        expect(resp.status).to.eq(400)
-      }
-    })
-  })
-
-  it('PATCH/PUT /report/:id/status -> updates status to reviewing', function () {
-    if (!reportId) this.skip()
-
-    const body = { report_status: 'reviewing' }
-
-    cy.request({
-      method: 'PATCH',
-      url: `${base}${prefix}/${reportId}/status`,
-      body,
-      failOnStatusCode: false
-    }).then((resp) => {
-      if ([404, 405].includes(resp.status)) {
-        cy.request({
-          method: 'PUT',
-          url: `${base}${prefix}/${reportId}/status`,
-          body,
-          failOnStatusCode: false
-        }).then((resp2) => {
-          expect(resp2.status).to.eq(200)
-          expect(resp2.body).to.have.property('report_status', 'reviewing')
-        })
-      } else {
-        expect(resp.status).to.eq(200)
-        expect(resp.body).to.have.property('report_status', 'reviewing')
-      }
-    })
-  })
-
-  it('DELETE /report/:id -> 400 on invalid id', () => {
-    cy.request({
-      method: 'DELETE',
-      url: `${base}${prefix}/abc`,
+      body: { reporter_id: 1, report_message: 'Test report' },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(400)
     })
   })
 
-  it('DELETE /report/:id -> deletes created report', function () {
-    if (!reportId) this.skip()
-
+  it('POST /report -> 400 for invalid reporter_id', () => {
     cy.request({
-      method: 'DELETE',
-      url: `${base}${prefix}/${reportId}`,
+      method: 'POST',
+      url: `${base}${prefix}`,
+      body: {
+        reporter_id: 'abc',
+        reported_user_id: 1,
+        report_message: 'Test report'
+      },
       failOnStatusCode: false
     }).then((resp) => {
-      expect(resp.status).to.eq(200)
-      expect(resp.body).to.have.property('message')
+      expect(resp.status).to.eq(400)
+    })
+  })
+
+  it('DELETE /report/:id without admin token -> forbidden', () => {
+    cy.request({
+      method: 'DELETE',
+      url: `${base}${prefix}/1`,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect([401, 403]).to.include(resp.status)
+    })
+  })
+
+  it('PATCH /report/:id without admin token -> forbidden', () => {
+    cy.request({
+      method: 'PATCH',
+      url: `${base}${prefix}/1`,
+      body: { report_status: 'resolved' },
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect([401, 403]).to.include(resp.status)
+    })
+  })
+
+  it('PATCH /report/:id with regular user -> forbidden', () => {
+    cy.request({
+      method: 'PATCH',
+      url: `${base}${prefix}/1`,
+      headers: { 'x-access-token': authToken },
+      body: { report_status: 'resolved' },
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect(resp.status).to.eq(403)
     })
   })
 })

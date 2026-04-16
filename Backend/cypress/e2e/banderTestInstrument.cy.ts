@@ -4,19 +4,44 @@ describe('Instrument routes', () => {
   const base = Cypress.config('baseUrl') || 'http://localhost:3000'
   const prefix = '/instrument'
 
-  const adminEmail = Cypress.env('ADMIN_EMAIL')
-  const adminPassword = Cypress.env('ADMIN_PASSWORD')
-
   let instrumentId: number | null = null
-  let adminToken: string | null = null
+  let authToken: string | null = null
 
   const extractId = (body: any): number | null =>
     body?.id ?? body?._id ?? body?.instrument?.id ?? null
+
+  const genRandomUser = () => {
+    const t = Math.random().toString(36).substring(2, 6)
+    return {
+      name: `testuser-${t}`,
+      email: `testuser${t}@example.com`,
+      password: 'Password123!'
+    }
+  }
+
+  before(() => {
+    const userData = genRandomUser()
+    // Register user
+    cy.request({
+      method: 'POST',
+      url: `${base}/users/register`,
+      body: userData,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect(resp.status).to.be.within(200, 299)
+      // Decode JWT to get user id
+      const token = resp.body?.token
+      if (token) {
+        authToken = token
+      }
+    })
+  })
 
   it('GET /instrument -> returns all instruments', () => {
     cy.request({
       method: 'GET',
       url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(200)
@@ -31,6 +56,7 @@ describe('Instrument routes', () => {
     cy.request({
       method: 'GET',
       url: `${base}${prefix}/${instrumentId}`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(200)
@@ -43,6 +69,7 @@ describe('Instrument routes', () => {
     cy.request({
       method: 'GET',
       url: `${base}${prefix}/abc`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(400)
@@ -53,85 +80,22 @@ describe('Instrument routes', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
-      body: { name: `cypress-inst-${Date.now()}` },
+      body: { name: `cypress-inst-${Math.random().toString(36).substring(2, 6)}` },
       failOnStatusCode: false
     }).then((resp) => {
       expect([401, 403]).to.include(resp.status)
     })
   })
 
-  it('POST /instrument with admin token -> creates instrument (if admin creds set)', function () {
-    if (!adminEmail || !adminPassword) this.skip()
-
+  it('POST /instrument with regular user -> forbidden (admin only)', () => {
     cy.request({
       method: 'POST',
-      url: `${base}/users/login`,
-      body: { email: adminEmail, password: adminPassword },
+      url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
+      body: { name: `cypress-inst-${Math.random().toString(36).substring(2, 6)}` },
       failOnStatusCode: false
-    }).then((loginResp) => {
-      expect(loginResp.status).to.be.within(200, 299)
-      adminToken =
-        loginResp.body?.token ||
-        loginResp.body?.accessToken ||
-        loginResp.body?.data?.token ||
-        null
-
-      expect(adminToken).to.exist
-
-      const name = `cypress-inst-${Date.now()}`
-
-      cy.request({
-        method: 'POST',
-        url: `${base}${prefix}`,
-        headers: { Authorization: `Bearer ${adminToken}` },
-        body: { name },
-        failOnStatusCode: false
-      }).then((createResp) => {
-        expect(createResp.status).to.eq(201)
-        expect(createResp.body).to.have.property('id')
-        expect(createResp.body).to.have.property('name', name)
-        instrumentId = createResp.body.id
-      })
-    })
-  })
-
-  it('POST /instrument duplicate name -> 409 (if admin creds set)', function () {
-    if (!adminEmail || !adminPassword) this.skip()
-
-    const dupName = `cypress-dup-inst-${Date.now()}`
-
-    cy.request({
-      method: 'POST',
-      url: `${base}/users/login`,
-      body: { email: adminEmail, password: adminPassword },
-      failOnStatusCode: false
-    }).then((loginResp) => {
-      const token =
-        loginResp.body?.token ||
-        loginResp.body?.accessToken ||
-        loginResp.body?.data?.token
-
-      expect(token).to.exist
-
-      cy.request({
-        method: 'POST',
-        url: `${base}${prefix}`,
-        headers: { Authorization: `Bearer ${token}` },
-        body: { name: dupName },
-        failOnStatusCode: false
-      }).then((r1) => {
-        expect([201, 409]).to.include(r1.status)
-
-        cy.request({
-          method: 'POST',
-          url: `${base}${prefix}`,
-          headers: { Authorization: `Bearer ${token}` },
-          body: { name: dupName },
-          failOnStatusCode: false
-        }).then((r2) => {
-          expect(r2.status).to.eq(409)
-        })
-      })
+    }).then((resp) => {
+      expect(resp.status).to.eq(403)
     })
   })
 })

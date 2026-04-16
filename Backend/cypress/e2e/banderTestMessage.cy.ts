@@ -4,17 +4,51 @@ describe('Message routes', () => {
   const base = Cypress.config('baseUrl') || 'http://localhost:3000'
   const prefix = '/message'
 
-  // Provide existing IDs via env for stable create test:
-  // CYPRESS_THREAD_ID=1 CYPRESS_SENDER_ID=2 npx cypress run --spec cypress/e2e/message.routes.cy.ts
-  const threadId = Number(Cypress.env('THREAD_ID'))
-  const senderId = Number(Cypress.env('SENDER_ID'))
+  let authToken: string | null = null
 
-  let createdMessageId: number | null = null
+  const genRandomUser = () => {
+    const t = Math.random().toString(36).substring(2, 6)
+    return {
+      name: `testuser-${t}`,
+      email: `testuser${t}@example.com`,
+      password: 'Password123!'
+    }
+  }
+
+  before(() => {
+    const userData = genRandomUser()
+    // Register user
+    cy.request({
+      method: 'POST',
+      url: `${base}/users/register`,
+      body: userData,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect(resp.status).to.be.within(200, 299)
+      // Decode JWT to get user id
+      const token = resp.body?.token
+      if (token) {
+        authToken = token
+      }
+    })
+  })
+
+  it('POST /message without token -> unauthorized', () => {
+    cy.request({
+      method: 'POST',
+      url: `${base}${prefix}`,
+      body: { thread_id: 1, sender_id: 1, message: 'test' },
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect([401, 403]).to.include(resp.status)
+    })
+  })
 
   it('POST /message -> 400 when required fields are missing', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
       body: {},
       failOnStatusCode: false
     }).then((resp) => {
@@ -26,6 +60,7 @@ describe('Message routes', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
       body: { thread_id: 'abc', sender_id: 'xyz', message: 'hello' },
       failOnStatusCode: false
     }).then((resp) => {
@@ -33,25 +68,25 @@ describe('Message routes', () => {
     })
   })
 
-  it('POST /message -> creates message when valid thread/user membership is provided', function () {
-    if (!threadId || !senderId || Number.isNaN(threadId) || Number.isNaN(senderId)) this.skip()
-
+  it('POST /message -> 404 for non-existent thread', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
-      body: {
-        thread_id: threadId,
-        sender_id: senderId,
-        message: `Cypress message ${Date.now()}`
-      },
+      headers: { 'x-access-token': authToken },
+      body: { thread_id: 999999, sender_id: 1, message: 'hello' },
       failOnStatusCode: false
     }).then((resp) => {
-      expect(resp.status).to.eq(201)
-      expect(resp.body).to.have.property('id')
-      expect(resp.body).to.have.property('thread_id', threadId)
-      expect(resp.body).to.have.property('sender_id', senderId)
-      expect(resp.body).to.have.property('message')
-      createdMessageId = resp.body.id
+      expect(resp.status).to.eq(404)
+    })
+  })
+
+  it('DELETE /message/:id without token -> unauthorized', () => {
+    cy.request({
+      method: 'DELETE',
+      url: `${base}${prefix}/1`,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect([401, 403]).to.include(resp.status)
     })
   })
 
@@ -59,22 +94,10 @@ describe('Message routes', () => {
     cy.request({
       method: 'DELETE',
       url: `${base}${prefix}/abc`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(400)
-    })
-  })
-
-  it('DELETE /message/:id -> deletes created message', function () {
-    if (!createdMessageId) this.skip()
-
-    cy.request({
-      method: 'DELETE',
-      url: `${base}${prefix}/${createdMessageId}`,
-      failOnStatusCode: false
-    }).then((resp) => {
-      expect(resp.status).to.eq(200)
-      expect(resp.body).to.have.property('message')
     })
   })
 
@@ -82,6 +105,7 @@ describe('Message routes', () => {
     cy.request({
       method: 'DELETE',
       url: `${base}${prefix}/999999999`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.eq(404)

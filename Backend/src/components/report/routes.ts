@@ -7,7 +7,7 @@ const router: Router = Router();
 router.get("/", getAllReport);
 router.get("/:id", getReportById);
 router.post("/", createReport);
-router.delete("/:id", deleteReport);
+router.delete("/:id", ensureAdmin, deleteReport);
 router.patch("/:id", ensureAdmin, updateReportStatus);
 
 export default router;

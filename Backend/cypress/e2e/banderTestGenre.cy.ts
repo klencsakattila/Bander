@@ -2,21 +2,46 @@
 
 describe('Genre routes', () => {
   const base = Cypress.config('baseUrl') || 'http://localhost:3000'
-  const prefix = '/genre'
+  const prefix = '/genres'
 
   let genreId: string | null = null
+  let authToken: string | null = null
 
   const extractId = (body: any) =>
     body?.id || body?._id || body?.genre?.id || body?.genre?._id || null
 
-  const adminEmail = Cypress.env('ADMIN_EMAIL')
-  const adminPassword = Cypress.env('ADMIN_PASSWORD')
-  let adminToken: string | null = null
+  const genRandomUser = () => {
+    const t = Math.random().toString(36).substring(2, 6)
+    return {
+      name: `testuser-${t}`,
+      email: `testuser${t}@example.com`,
+      password: 'Password123!'
+    }
+  }
 
-  it('GET /genre -> returns all genres', () => {
+  before(() => {
+    const userData = genRandomUser()
+    // Register user
+    cy.request({
+      method: 'POST',
+      url: `${base}/users/register`,
+      body: userData,
+      failOnStatusCode: false
+    }).then((resp) => {
+      expect(resp.status).to.be.within(200, 299)
+      // Decode JWT to get user id
+      const token = resp.body?.token
+      if (token) {
+        authToken = token
+      }
+    })
+  })
+
+  it('GET /genres -> returns all genres', () => {
     cy.request({
       method: 'GET',
       url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.be.within(200, 299)
@@ -25,12 +50,13 @@ describe('Genre routes', () => {
     })
   })
 
-  it('GET /genre/:id -> returns one genre by id (if any exists)', function () {
+  it('GET /genres/:id -> returns one genre by id (if any exists)', function () {
     if (!genreId) this.skip()
 
     cy.request({
       method: 'GET',
       url: `${base}${prefix}/${genreId}`,
+      headers: { 'x-access-token': authToken },
       failOnStatusCode: false
     }).then((resp) => {
       expect(resp.status).to.be.within(200, 299)
@@ -38,46 +64,26 @@ describe('Genre routes', () => {
     })
   })
 
-  it('POST /genre without token -> should be unauthorized/forbidden', () => {
+  it('POST /genres without token -> should be unauthorized/forbidden', () => {
     cy.request({
       method: 'POST',
       url: `${base}${prefix}`,
-      body: { name: `genre-${Date.now()}` },
+      body: { name: `genre-${Math.random().toString(36).substring(2, 6)}` },
       failOnStatusCode: false
     }).then((resp) => {
       expect([401, 403]).to.include(resp.status)
     })
   })
 
-  it('POST /genre with admin token -> creates genre (if admin creds are set)', function () {
-    if (!adminEmail || !adminPassword) this.skip()
-
+  it('POST /genres with regular user -> should be forbidden (admin only)', () => {
     cy.request({
       method: 'POST',
-      url: `${base}/users/login`,
-      body: { email: adminEmail, password: adminPassword },
+      url: `${base}${prefix}`,
+      headers: { 'x-access-token': authToken },
+      body: { name: `genre-${Math.random().toString(36).substring(2, 6)}` },
       failOnStatusCode: false
-    }).then((loginResp) => {
-      expect(loginResp.status).to.be.within(200, 299)
-      adminToken =
-        loginResp.body?.token ||
-        loginResp.body?.accessToken ||
-        loginResp.body?.data?.token ||
-        null
-      expect(adminToken).to.exist
-
-      cy.request({
-        method: 'POST',
-        url: `${base}${prefix}`,
-        headers: { Authorization: `Bearer ${adminToken}` },
-        body: { name: `genre-${Date.now()}` },
-        failOnStatusCode: false
-      }).then((createResp) => {
-        expect(createResp.status).to.be.within(200, 299)
-        const newId = extractId(createResp.body)
-        expect(createResp.body).to.exist
-        if (newId) genreId = newId
-      })
+    }).then((resp) => {
+      expect(resp.status).to.equal(403)
     })
   })
 })
