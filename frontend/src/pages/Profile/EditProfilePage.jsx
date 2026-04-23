@@ -94,6 +94,7 @@ export default function EditProfileSettings() {
     <div className="profile-settings-page">
       {/* Left Profile Card */}
       <div className="profile-card">
+        {console.log(form)}
         <img
           src={avatarPreview || avatarUrl || form.profile_image_url || placeholder}
           alt="User avatar"

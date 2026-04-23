@@ -62,6 +62,7 @@ export function useEditProfileSettings() {
     instruments: "", // CSV of IDs
     styles: "",      // CSV of IDs
     description: "",
+    profile_image_url: "",
   });
 
   function populateFormFromUser(u, instOpts, genreOpts) {
@@ -86,6 +87,7 @@ export function useEditProfileSettings() {
       instruments: instrumentsCsv,
       styles: stylesCsv,
       description: u.description ?? "",
+      profile_image_url: u.profile_image_url ?? "",
     }));
   }
 
@@ -173,6 +175,7 @@ export function useEditProfileSettings() {
         email: (form.email ?? "").trim() || null,
         city: (form.city ?? "").trim() || null,
         birth_date: form.birth_date || null,
+        profile_image_url: (form.profile_image_url ?? "").trim() || null,
         ...extra,
       };
 
@@ -202,6 +205,7 @@ export function useEditProfileSettings() {
         password: "",
         instruments: instrumentsCsv || p.instruments,
         styles: stylesCsv || p.styles,
+        profile_image_url: updated?.profile_image_url ?? p.profile_image_url ?? "",
       }));
 
       setSuccess("Profile updated successfully.");

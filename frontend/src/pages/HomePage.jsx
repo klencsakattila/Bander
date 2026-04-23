@@ -96,8 +96,8 @@ export default function HomePage() {
 
             <Link to="/bands" className="see-all-btn">See all bands</Link>
           </div>
-
-          <img className="band-image" src={bands[0]?.image || placeholder} alt="Band" />
+            {/* {console.log(bands[0])}
+          <img className="band-image" src={bands[0]?.profile_image_url || placeholder} alt="Band" /> */}
         </div>
       </section>
 
