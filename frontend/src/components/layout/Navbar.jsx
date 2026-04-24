@@ -33,6 +33,7 @@ export default function Navbar() {
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [bandId, setBandId] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,50 +81,67 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
+    setMenuOpen(false);
     navigate("/", { replace: true });
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-logo">
-          <Link to="/">Bander</Link>
+          <Link to="/" onClick={closeMenu}>Bander</Link>
         </div>
 
-        <div className="navbar-links">
-          <Link to="/bands">Bands</Link>
-          <Link to="/artists">Artists</Link>
-          <Link to="/events">Events</Link>
-          {isAuth && bandManageTo && <Link to={bandManageTo}>{bandManageLabel}</Link>}
-        </div>
+        <button
+          type="button"
+          className={`navbar-burger ${menuOpen ? "is-open" : ""}`}
+          aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
 
-        <div className="navbar-actions">
-          {!isAuth ? (
-            <>
-              <Link to="/login" className="nav-btn nav-btn-outline">
-                Log in
-              </Link>
-              <Link to="/signup" className="nav-btn nav-btn-filled">
-                Sign up
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/profile/settings" className="nav-btn nav-btn-outline">
-                My account
-              </Link>
-              <button onClick={handleLogout} className="nav-btn nav-btn-filled">
-                Sign out
-              </button>
-            </>
-          )}
+        <div className={`navbar-menu ${menuOpen ? "is-open" : ""}`}>
+          <div className="navbar-links">
+            <Link to="/bands" onClick={closeMenu}>Bands</Link>
+            <Link to="/artists" onClick={closeMenu}>Artists</Link>
+            <Link to="/events" onClick={closeMenu}>Events</Link>
+            {isAuth && bandManageTo && <Link to={bandManageTo} onClick={closeMenu}>{bandManageLabel}</Link>}
+          </div>
 
-          {/* ✅ Admin link */}
-          {isAuth && isAdmin && (
-            <Link to="/admin" className="nav-btn nav-btn-outline">
-              Admin
-            </Link>
-          )}
+          <div className="navbar-actions">
+            {!isAuth ? (
+              <>
+                <Link to="/login" className="nav-btn nav-btn-outline" onClick={closeMenu}>
+                  Log in
+                </Link>
+                <Link to="/signup" className="nav-btn nav-btn-filled" onClick={closeMenu}>
+                  Sign up
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/profile/settings" className="nav-btn nav-btn-outline" onClick={closeMenu}>
+                  My account
+                </Link>
+                <button onClick={handleLogout} className="nav-btn nav-btn-filled">
+                  Sign out
+                </button>
+              </>
+            )}
+
+            {/* ✅ Admin link */}
+            {isAuth && isAdmin && (
+              <Link to="/admin" className="nav-btn nav-btn-outline" onClick={closeMenu}>
+                Admin
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </nav>

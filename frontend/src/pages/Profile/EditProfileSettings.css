@@ -1,19 +1,22 @@
 .profile-settings-page {
     display: flex;
-    gap: 50px;
-    padding: 40px 80px;
+    gap: clamp(20px, 4vw, 50px);
+    padding: clamp(20px, 4vw, 40px) clamp(16px, 5vw, 80px);
     background-color: #FFF3E0;
+    flex-wrap: wrap;
   }
-  
+
   /* ---------------------------------------
      LEFT PROFILE CARD
   ---------------------------------------- */
   .profile-card {
     width: 230px;
+    max-width: 100%;
     padding: 20px;
     background-color: #E8D7C7;
     border-radius: 20px;
     text-align: left;
+    box-sizing: border-box;
   }
   
   .profile-avatar {
@@ -75,6 +78,12 @@
     border: 1px solid #8D99AE;
     background-color: #FFFFFF;
     color: #264653;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .profile-form {
+    min-width: 0;
   }
   
   .form-group textarea {
@@ -106,9 +115,18 @@
       flex-direction: column;
       padding: 20px;
     }
-  
+
+    .profile-card {
+      width: 100%;
+    }
+
     .form-grid {
       grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .save-btn {
+      width: 100%;
     }
   }
   

@@ -2,9 +2,11 @@
   background-color: #F7E1C8; /* matches signup card look */
   border-radius: 12px;
   padding: 12px;
-  width: 240px;
+  width: 100%;
+  max-width: 240px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
   transition: 0.2s;
+  box-sizing: border-box;
 }
 
 .artist-card:hover {

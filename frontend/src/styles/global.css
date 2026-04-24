@@ -13,6 +13,8 @@ html, body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: #FFF3E0; /* brand background */
   color: #264653; /* main text */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Remove underline */
@@ -70,9 +72,16 @@ input, select, textarea {
   border-radius: 6px;
   border: 1px solid #8D99AE;
   outline: none;
-  font-size: 14px;
+  font-size: 16px; /* >=16px prevents iOS auto zoom */
   background-color: #fff;
   color: #264653;
+  max-width: 100%;
+}
+
+@media (min-width: 601px) {
+  input, select, textarea {
+    font-size: 14px;
+  }
 }
 
 input:focus, textarea:focus {
@@ -118,6 +127,18 @@ html, body, #root {
 .page-content {
   flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: center; /* This centers content vertically */
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.page-content > * {
+  width: 100%;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
 }

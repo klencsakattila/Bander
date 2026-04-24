@@ -10,9 +10,24 @@
 
 .img-upload-row {
   display: grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: 140px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
+}
+
+@media (max-width: 480px) {
+  .img-upload-row {
+    grid-template-columns: 1fr;
+  }
+
+  .img-upload-preview {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .img-upload-buttons {
+    flex-wrap: wrap;
+  }
 }
 
 .img-upload-preview {

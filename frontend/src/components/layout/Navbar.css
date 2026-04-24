@@ -8,6 +8,8 @@
   display: flex;
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  position: relative;
+  z-index: 100;
 }
 
 .navbar-container {
@@ -18,6 +20,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  justify-content: space-between;
+  margin-left: 24px;
 }
 
 /* ============================
@@ -27,6 +40,7 @@
   font-size: 26px;
   font-weight: 700;
   color: #264653; /* main text */
+  white-space: nowrap;
 }
 
 /* ============================
@@ -35,6 +49,7 @@
 .navbar-links {
   display: flex;
   gap: 30px;
+  flex-wrap: wrap;
 }
 
 .navbar-links a {
@@ -53,6 +68,7 @@
 .navbar-actions {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .nav-btn {
@@ -63,6 +79,8 @@
   text-decoration: none;
   border: 2px solid transparent;
   cursor: pointer;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 /* Outline button */
@@ -86,10 +104,104 @@
 }
 
 /* ============================
+   HAMBURGER BUTTON (mobile)
+============================ */
+.navbar-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 32px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.navbar-burger span {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background-color: #264653;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.navbar-burger.is-open span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+.navbar-burger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+.navbar-burger.is-open span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+/* ============================
    RESPONSIVE
 ============================ */
 @media (max-width: 900px) {
-  .navbar-links {
+  .navbar-container {
+    padding: 0 20px;
+  }
+
+  .navbar-burger {
+    display: flex;
+  }
+
+  .navbar-menu {
     display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background-color: #FF892C;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 20px 20px;
+    gap: 16px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    margin-left: 0;
+  }
+
+  .navbar-menu.is-open {
+    display: flex;
+  }
+
+  .navbar-links {
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .navbar-links a {
+    font-size: 16px;
+    padding: 6px 0;
+  }
+
+  .navbar-actions {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .nav-btn {
+    width: 100%;
+    text-align: center;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 10px 0;
+  }
+
+  .navbar-container {
+    padding: 0 16px;
+  }
+
+  .navbar-logo a {
+    font-size: 22px;
   }
 }

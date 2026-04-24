@@ -9,19 +9,21 @@
   .about-card {
     width: 100%;
     max-width: 980px;
-    padding: 34px 34px 26px;
+    padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 34px) 26px;
     color: #111;
+    box-sizing: border-box;
   }
-  
+
   .about-title {
     text-align: center;
-    font-size: 34px;
+    font-size: clamp(24px, 5vw, 34px);
     font-weight: 700;
     margin: 0 0 22px;
+    line-height: 1.2;
   }
-  
+
   .about-text {
-    font-size: 15px;
+    font-size: clamp(14px, 2.5vw, 15px);
     line-height: 1.7;
     max-width: 920px;
     margin: 0 auto;
@@ -37,6 +39,7 @@
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
   }
   
   .about-link {
